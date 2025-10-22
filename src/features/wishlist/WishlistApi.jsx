@@ -2,7 +2,7 @@ import { axiosi } from '../../config/axios'
 
 export const createWishlistItem = async (data) => {
     try {
-        const res = await axiosi.post("/wishlist", data)
+        const res = await axiosi.post("/wishlist/create", data)
         return res.data
     } catch (error) {
         throw error.response.data
