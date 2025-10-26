@@ -6,7 +6,7 @@ const initialState={
     wishlistItemAddStatus:'idle',
     wishlistItemDeleteStatus:"idle",
     wishlistFetchStatus:'idle',
-    items:[],
+    items: [],
     totalResults:0,
     errors:null,
     successMessage:null,

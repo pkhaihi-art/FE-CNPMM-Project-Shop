@@ -11,7 +11,7 @@ const initialState={
     signupError:null,
     loginStatus:"idle",
     loginError:null,
-    loggedInUser:null,
+    loggedInUser: null,
     otpVerificationStatus:"idle",
     otpVerificationError:null,
     forgotPasswordStatus:"idle",
@@ -202,25 +202,46 @@ const authSlice=createSlice({
                 state.status='pending'
             })
             .addCase(logoutAsync.fulfilled,(state)=>{
+                // Reset all auth states to initial values
                 state.status='fullfilled'
+                state.errors=null
                 state.loggedInUser=null
+                state.isAuthChecked=true
+                state.loginStatus='idle'
+                state.loginError=null
+                state.signupStatus='idle'
+                state.signupError=null
+                state.otpVerificationStatus='idle'
+                state.otpVerificationError=null
+                state.successMessage=null
             })
             .addCase(logoutAsync.rejected,(state,action)=>{
                 state.status='rejected'
                 state.errors=action.error
+                // Even if logout fails on server, clear user data from client
+                state.loggedInUser=null
             })
 
             .addCase(checkAuthAsync.pending,(state)=>{
                 state.status='pending'
+                // Keep current state while checking
+                if (!state.isAuthChecked) {
+                    state.isAuthChecked = false;
+                }
             })
             .addCase(checkAuthAsync.fulfilled,(state,action)=>{
                 state.status='fullfilled'
                 state.loggedInUser=action.payload.user
+                state.errors=null
                 state.isAuthChecked=true
             })
             .addCase(checkAuthAsync.rejected,(state,action)=>{
                 state.status='rejected'
                 state.errors=action.error
+                // Only clear user if this is the first auth check
+                if (!state.isAuthChecked) {
+                    state.loggedInUser=null;
+                }
                 state.isAuthChecked=true
             })
             

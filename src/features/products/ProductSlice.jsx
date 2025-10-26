@@ -110,11 +110,16 @@ const productSlice=createSlice({
 
             .addCase(updateProductByIdAsync.pending,(state)=>{
                 state.productUpdateStatus='pending'
+                state.errors=null
             })
             .addCase(updateProductByIdAsync.fulfilled,(state,action)=>{
                 state.productUpdateStatus='fulfilled'
                 const index=state.products.findIndex((product)=>product._id===action.payload._id)
-                state.products[index]=action.payload
+                if (index !== -1) {
+                    state.products[index]=action.payload
+                }
+                state.selectedProduct=action.payload
+                state.successMessage='Product updated successfully'
             })
             .addCase(updateProductByIdAsync.rejected,(state,action)=>{
                 state.productUpdateStatus='rejected'
@@ -139,8 +144,7 @@ const productSlice=createSlice({
             })
             .addCase(deleteProductByIdAsync.fulfilled,(state,action)=>{
                 state.status='fulfilled'
-                const index=state.products.findIndex((product)=>product._id===action.payload._id)
-                state.products[index]=action.payload
+                state.products = state.products.filter(product => product._id !== action.payload._id)
             })
             .addCase(deleteProductByIdAsync.rejected,(state,action)=>{
                 state.status='rejected'

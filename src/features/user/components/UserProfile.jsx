@@ -1,175 +1,287 @@
-import { Avatar, Button, Paper, Stack, Typography, useTheme ,TextField, useMediaQuery} from '@mui/material'
+import { Avatar, Button, Flex, Typography, Input, Grid, Form, theme } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { selectUserInfo } from '../UserSlice'
-import { addAddressAsync, resetAddressAddStatus, resetAddressDeleteStatus, resetAddressUpdateStatus, selectAddressAddStatus, selectAddressDeleteStatus, selectAddressErrors, selectAddressStatus, selectAddressUpdateStatus, selectAddresses } from '../../address/AddressSlice'
-import { Address } from '../../address/components/Address'
+import { 
+    addAddressAsync, 
+    resetAddressAddStatus, 
+    resetAddressDeleteStatus, 
+    resetAddressUpdateStatus, 
+    selectAddressAddStatus, 
+    selectAddressDeleteStatus, 
+    selectAddressErrors, 
+    selectAddressStatus, 
+    selectAddressUpdateStatus, 
+    selectAddresses 
+} from '../../address/AddressSlice'
+// Đảm bảo component 'Address' này cũng đã được chuyển đổi sang Antd
+import { Address } from '../../address/components/Address' 
 import { useForm } from 'react-hook-form'
-import { LoadingButton } from '@mui/lab'
-import {toast} from 'react-toastify'
+import { toast } from 'react-toastify'
+
+const { Title, Text } = Typography;
+const { useBreakpoint } = Grid;
+const { useToken } = theme;
 
 export const UserProfile = () => {
 
-    const dispatch=useDispatch()
-    const {register,handleSubmit,watch,reset,formState: { errors }} = useForm()
-    const status=useSelector(selectAddressStatus)
-    const userInfo=useSelector(selectUserInfo)
-    const addresses=useSelector(selectAddresses)
-    const theme=useTheme()
-    const [addAddress,setAddAddress]=useState(false)
+    const dispatch = useDispatch();
+    const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
+    const status = useSelector(selectAddressStatus);
+    const userInfo = useSelector(selectUserInfo);
+    const addresses = useSelector(selectAddresses);
+    const [addAddress, setAddAddress] = useState(false);
 
-    
-    const addressAddStatus=useSelector(selectAddressAddStatus)
-    const addressUpdateStatus=useSelector(selectAddressUpdateStatus)
-    const addressDeleteStatus=useSelector(selectAddressDeleteStatus)
+    // Lấy token theme của Antd
+    const { token } = useToken();
 
-    const is900=useMediaQuery(theme.breakpoints.down(900))
-    const is480=useMediaQuery(theme.breakpoints.down(480))
+    // Các selector status (giữ nguyên)
+    const addressAddStatus = useSelector(selectAddressAddStatus);
+    const addressUpdateStatus = useSelector(selectAddressUpdateStatus);
+    const addressDeleteStatus = useSelector(selectAddressDeleteStatus);
 
-    useEffect(()=>{
+    // Tương đương với useMediaQuery
+    const screens = useBreakpoint();
+    const isTablet = !screens.lg; // Tương đương is900 (Antd lg breakpoint là 992px)
+    const isMobile = !screens.sm; // Tương đương is480 (Antd sm breakpoint là 576px)
+
+    // useEffects (giữ nguyên, vì chúng độc lập với UI library)
+    useEffect(() => {
         window.scrollTo({
-            top:0,
-            behavior:"instant"
+            top: 0,
+            behavior: "instant"
+        });
+    }, []);
+
+    useEffect(() => {
+        if (addressAddStatus === 'fulfilled') {
+            toast.success("Address added");
+            reset();
+            setAddAddress(false);
+        } else if (addressAddStatus === 'rejected') {
+            toast.error("Error adding address, please try again later");
+        }
+    }, [addressAddStatus, reset]);
+
+    useEffect(() => {
+        if (addressUpdateStatus === 'fulfilled') {
+            toast.success("Address updated");
+        } else if (addressUpdateStatus === 'rejected') {
+            toast.error("Error updating address, please try again later");
+        }
+    }, [addressUpdateStatus]);
+
+    useEffect(() => {
+        if (addressDeleteStatus === 'fulfilled') {
+            toast.success("Address deleted");
+        } else if (addressDeleteStatus === 'rejected') {
+            toast.error("Error deleting address, please try again later");
+        }
+    }, [addressDeleteStatus]);
+
+    useEffect(() => {
+        return () => {
+            dispatch(resetAddressAddStatus());
+            dispatch(resetAddressUpdateStatus());
+            dispatch(resetAddressDeleteStatus());
+        }
+    }, [dispatch]);
+
+    const handleAddAddress = (data) => {
+        const address = { ...data, user: userInfo._id };
+        dispatch(addAddressAsync(address));
+    };
+
+    // Style linh hoạt để mô phỏng `component={is480?'':Paper}`
+    const containerStyle = {
+        width: isTablet ? '100%' : '50rem',
+        padding: 16, // p={2}
+        marginTop: isMobile ? 0 : 40, // mt={is480?0:5}
+        ...(isMobile ? {} : { // Styles khi không phải mobile (tương đương Paper)
+            background: token.colorBgContainer,
+            borderRadius: token.borderRadiusLG,
+            boxShadow: token.boxShadowSecondary, // Tương đương elevation={1}
         })
-    },[])
+    };
 
+    return (
+        // Stack -> Flex
+        <Flex vertical style={{ minHeight: 'calc(100vh - 4rem)' }} justify="flex-start" align="center">
 
-    useEffect(()=>{
-        if(addressAddStatus==='fulfilled'){
-            toast.success("Address added")
-        }
-        else if(addressAddStatus==='rejected'){
-            toast.error("Error adding address, please try again later")
-        }
-    },[addressAddStatus])
+            {/* Stack component={Paper} -> Flex với style động */}
+            <Flex vertical style={containerStyle} gap={16}> {/* rowGap={2} -> gap={16} */}
 
-    useEffect(()=>{
+                {/* user details - [name ,email ] */}
+                {/* Stack -> Flex */}
+                <Flex 
+                    vertical 
+                    style={{ 
+                        backgroundColor: token.colorPrimaryBg, // theme.palette.primary.light
+                        color: token.colorPrimary, // theme.palette.primary.main
+                        padding: 16, 
+                        borderRadius: token.borderRadiusLG 
+                    }} 
+                    gap={8} // rowGap={1} -> gap={8}
+                    justify="center" 
+                    align="center"
+                >
+                    {/* Avatar (MUI) -> Avatar (Antd) */}
+                    <Avatar size={70}>{userInfo?.name?.charAt(0)}</Avatar>
+                    <Text>{userInfo?.name}</Text>
+                    <Text>{userInfo?.email}</Text>
+                </Flex>
 
-        if(addressUpdateStatus==='fulfilled'){
-            toast.success("Address updated")
-        }
-        else if(addressUpdateStatus==='rejected'){
-            toast.error("Error updating address, please try again later")
-        }
-    },[addressUpdateStatus])
+                {/* address section */}
+                {/* Stack -> Flex */}
+                <Flex vertical justify="center" align="center" gap={24}> {/* rowGap={3} -> gap={24} */}
 
-    useEffect(()=>{
+                    {/* heading and add button */}
+                    {/* Stack (row) -> Flex */}
+                    <Flex align="center" justify="center" gap={8}> {/* columnGap={1} -> gap={8} */}
+                        <Title level={5} style={{ fontWeight: 400, margin: 0 }}>Manage addresses</Title>
+                        {/* Button (MUI) -> Button (Antd) */}
+                        <Button 
+                            type="primary" // variant="contained"
+                            onClick={() => setAddAddress(true)} 
+                            size={isMobile ? 'small' : 'middle'}
+                        >
+                            Add
+                        </Button>
+                    </Flex>
+                    
+                    {/* add address form - state dependent*/}
+                    {
+                        addAddress && (
+                            // Stack (form) -> Form (Antd)
+                            <Form 
+                                layout="vertical" 
+                                onFinish={handleSubmit(handleAddAddress)} 
+                                style={{ width: '100%' }}
+                            >
+                                {/* Các <Stack> bọc <TextField> được thay thế bằng <Form.Item> 
+                                    để có layout và xử lý lỗi chuẩn Antd.
+                                */}
+                                <Form.Item 
+                                    label="Type" 
+                                    required 
+                                    validateStatus={errors.type ? 'error' : ''}
+                                    help={errors.type ? 'Type is required' : null}
+                                >
+                                    <Input placeholder='Eg. Home, Buisness' {...register("type", { required: true })} />
+                                </Form.Item>
 
-        if(addressDeleteStatus==='fulfilled'){
-            toast.success("Address deleted")
-        }
-        else if(addressDeleteStatus==='rejected'){
-            toast.error("Error deleting address, please try again later")
-        }
-    },[addressDeleteStatus])
+                                <Form.Item 
+                                    label="Street" 
+                                    required 
+                                    validateStatus={errors.street ? 'error' : ''}
+                                    help={errors.street ? 'Street is required' : null}
+                                >
+                                    <Input {...register("street", { required: true })} />
+                                </Form.Item>
 
-    useEffect(()=>{
-        return ()=>{
-            dispatch(resetAddressAddStatus())
-            dispatch(resetAddressUpdateStatus())
-            dispatch(resetAddressDeleteStatus())
-        }
-    },[])
+                                <Form.Item 
+                                    label="Postal Code" 
+                                    required 
+                                    validateStatus={errors.postalCode ? 'error' : ''}
+                                    help={errors.postalCode ? 'Postal Code is required' : null}
+                                >
+                                    <Input type="number" {...register("postalCode", { required: true })} />
+                                </Form.Item>
 
-    const handleAddAddress=(data)=>{
-        const address={...data,user:userInfo._id}
-        dispatch(addAddressAsync(address))
-        setAddAddress(false)
-        reset()
-    }
+                                <Form.Item 
+                                    label="Country" 
+                                    required 
+                                    validateStatus={errors.country ? 'error' : ''}
+                                    help={errors.country ? 'Country is required' : null}
+                                >
+                                    <Input {...register("country", { required: true })} />
+                                </Form.Item>
 
-  return (
-    <Stack height={'calc(100vh - 4rem)'} justifyContent={'flex-start'} alignItems={'center'}>
+                                <Form.Item 
+                                    label="Phone Number" 
+                                    required 
+                                    validateStatus={errors.phoneNumber ? 'error' : ''}
+                                    help={errors.phoneNumber ? 'Phone Number is required' : null}
+                                >
+                                    <Input type="number" {...register("phoneNumber", { required: true })} />
+                                </Form.Item>
 
-            <Stack component={is480?'':Paper} elevation={1} width={is900?'100%':"50rem"} p={2} mt={is480?0:5} rowGap={2}>
+                                <Form.Item 
+                                    label="State" 
+                                    required 
+                                    validateStatus={errors.state ? 'error' : ''}
+                                    help={errors.state ? 'State is required' : null}
+                                >
+                                    <Input {...register("state", { required: true })} />
+                                </Form.Item>
 
-                    {/* user details - [name ,email ] */}
-                    <Stack bgcolor={theme.palette.primary.light} color={theme.palette.primary.main} p={2} rowGap={1} borderRadius={'.6rem'} justifyContent={'center'} alignItems={'center'}>
-                        <Avatar src='none' alt={userInfo?.name} sx={{width:70,height:70}}></Avatar>
-                        <Typography>{userInfo?.name}</Typography>
-                        <Typography>{userInfo?.email}</Typography>
-                    </Stack>
+                                <Form.Item 
+                                    label="City" 
+                                    required 
+                                    validateStatus={errors.city ? 'error' : ''}
+                                    help={errors.city ? 'City is required' : null}
+                                >
+                                    <Input {...register("city", { required: true })} />
+                                </Form.Item>
 
+                                {/* Form buttons */}
+                                <Form.Item style={{ marginBottom: 0 }}>
+                                    {/* Stack (row) -> Flex */}
+                                    <Flex justify="flex-end" gap={isMobile ? 8 : 16}>
+                                        {/* LoadingButton -> Button (Antd) với prop `loading` */}
+                                        <Button 
+                                            type="primary" 
+                                            htmlType="submit" 
+                                            loading={status === 'pending'} 
+                                            size={isMobile ? "small" : "middle"}
+                                        >
+                                            Add
+                                        </Button>
+                                        <Button 
+                                            danger // color="error"
+                                            onClick={() => setAddAddress(false)} 
+                                            // variant={is480?"outlined":"text"} -> type={isMobile?"default":"text"}
+                                            type={isMobile ? "default" : "text"} 
+                                            size={isMobile ? "small" : "middle"}
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </Flex>
+                                </Form.Item>
+                            </Form>
+                        )
+                    }
 
-                    {/* address section */}
-                    <Stack justifyContent={'center'} alignItems={'center'} rowGap={3}>
-
-
-                        {/* heading and add button */}
-                        <Stack flexDirection={'row'} alignItems={'center'} justifyContent={'center'} columnGap={1}>
-                            <Typography variant='h6' fontWeight={400}>Manage addresses</Typography>
-                            <Button onClick={()=>setAddAddress(true)} size={is480?'small':""} variant='contained'>Add</Button>
-                        </Stack>
-                        
-                        {/* add address form - state dependent*/}
+                    {/* mapping on addresses here */}
+                    {/* Stack -> Flex */}
+                    <Flex vertical style={{ width: '100%' }} gap={16}> {/* rowGap={2} -> gap={16} */}
                         {
-                            addAddress?(
-                                <Stack width={'100%'} component={'form'} noValidate onSubmit={handleSubmit(handleAddAddress)} rowGap={2}>
-                    
-                                        <Stack>
-                                            <Typography  gutterBottom>Type</Typography>
-                                            <TextField placeholder='Eg. Home, Buisness' {...register("type",{required:true})}/>
-                                        </Stack>
-                    
-                    
-                                        <Stack>
-                                            <Typography gutterBottom>Street</Typography>
-                                            <TextField {...register("street",{required:true})}/>
-                                        </Stack>
-                    
-                                        <Stack>
-                                            <Typography gutterBottom>Postal Code</Typography>
-                                            <TextField type='number' {...register("postalCode",{required:true})}/>
-                                        </Stack>
-                    
-                                        <Stack>
-                                            <Typography gutterBottom>Country</Typography>
-                                            <TextField {...register("country",{required:true})}/>
-                                        </Stack>
-                    
-                                        <Stack>
-                                            <Typography  gutterBottom>Phone Number</Typography>
-                                            <TextField type='number' {...register("phoneNumber",{required:true})}/>
-                                        </Stack>
-                    
-                                        <Stack>
-                                            <Typography gutterBottom>State</Typography>
-                                            <TextField {...register("state",{required:true})}/>
-                                        </Stack>
-                    
-                                        <Stack>
-                                            <Typography gutterBottom>City</Typography>
-                                            <TextField {...register("city",{required:true})}/>
-                                        </Stack>
-
-                                        <Stack flexDirection={'row'} alignSelf={'flex-end'} columnGap={is480?1:2}>
-                                            <LoadingButton loading={status==='pending'} type='submit' size={is480?"small":""} variant='contained'>add</LoadingButton>
-                                            <Button color='error' onClick={()=>setAddAddress(false)} variant={is480?"outlined":"text"} size={is480?"small":""} >cancel</Button>
-                                        </Stack>
-                                </Stack>
-                            ):('')
+                            addresses.length > 0 ? (
+                                addresses.map((address) => (
+                                    <Address 
+                                        key={address._id} 
+                                        id={address._id} 
+                                        city={address.city} 
+                                        country={address.country} 
+                                        phoneNumber={address.phoneNumber} 
+                                        postalCode={address.postalCode} 
+                                        state={address.state} 
+                                        street={address.street} 
+                                        type={address.type} 
+                                    />
+                                ))
+                            ) : (
+                                // Typography -> Text
+                                <Text type="secondary" style={{ textAlign: 'center', marginTop: 16 }}>
+                                    You have no added addresses
+                                </Text>
+                            )
                         }
+                    </Flex>
 
-                        {/* mapping on addresses here  */}
-                        <Stack width={'100%'} rowGap={2}>
-                            {
-                                addresses.length>0?(
-                                    addresses.map((address)=>(
-                                        <Address key={address._id} id={address._id} city={address.city} country={address.country} phoneNumber={address.phoneNumber} postalCode={address.postalCode} state={address.state} street={address.street} type={address.type}/>
-                                    ))
-                                ):(
-                                    <Typography textAlign={'center'} mt={2} variant='body2'>You have no added addresses</Typography>
-                                )
-                            }      
-                        </Stack>
+                </Flex>
 
-                    </Stack>
-
-
-            </Stack>
-
-
-
-    </Stack>
-  )
+            </Flex>
+        </Flex>
+    )
 }

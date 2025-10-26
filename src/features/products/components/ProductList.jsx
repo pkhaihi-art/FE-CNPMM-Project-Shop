@@ -1,319 +1,285 @@
-import {FormControl, Grid, IconButton, InputLabel, MenuItem, Select, Stack, Typography, useMediaQuery, useTheme } from '@mui/material'
-import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { fetchProductsAsync, resetProductFetchStatus, selectProductFetchStatus, selectProductIsFilterOpen, selectProductTotalResults, selectProducts, toggleFilters } from '../ProductSlice'
-import { ProductCard } from './ProductCard'
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AddIcon from '@mui/icons-material/Add';
-import { selectBrands } from '../../brands/BrandSlice'
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import { selectCategories } from '../../categories/CategoriesSlice'
-import Pagination from '@mui/material/Pagination';
-import { ITEMS_PER_PAGE } from '../../../constants'
-import {createWishlistItemAsync, deleteWishlistItemByIdAsync, resetWishlistItemAddStatus, resetWishlistItemDeleteStatus, selectWishlistItemAddStatus, selectWishlistItemDeleteStatus, selectWishlistItems} from '../../wishlist/WishlistSlice'
-import {selectLoggedInUser} from '../../auth/AuthSlice'
-import {toast} from 'react-toastify'
-import {banner1, banner2, banner3, banner4, loadingAnimation} from '../../../assets'
-import { resetCartItemAddStatus, selectCartItemAddStatus } from '../../cart/CartSlice'
-import { motion } from 'framer-motion'
-import { ProductBanner } from './ProductBanner'
-import ClearIcon from '@mui/icons-material/Clear';
-import Lottie from 'lottie-react'
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+    Row,
+    Col,
+    Space,
+    Typography,
+    Select,
+    Pagination,
+    Flex,
+    Radio
+} from 'antd';
+import { fetchProductsAsync, resetProductFetchStatus, selectProductFetchStatus, selectProductTotalResults, selectProducts } from '../ProductSlice';
+import { ProductCard } from './ProductCard';
+import { selectBrands } from '../../brands/BrandSlice';
+import { selectCategories } from '../../categories/CategoriesSlice';
+import { ITEMS_PER_PAGE } from '../../../constants';
+import { createWishlistItemAsync, deleteWishlistItemByIdAsync, resetWishlistItemAddStatus, resetWishlistItemDeleteStatus, selectWishlistItemAddStatus, selectWishlistItemDeleteStatus, selectWishlistItems } from '../../wishlist/WishlistSlice';
+import { selectLoggedInUser } from '../../auth/AuthSlice';
+import { toast } from 'react-toastify';
+import { banner1, banner2, banner3, banner4, loadingAnimation } from '../../../assets';
+import { resetCartItemAddStatus, selectCartItemAddStatus } from '../../cart/CartSlice';
+import { ProductBanner } from './ProductBanner'; // Giả định component này đã được chuyển đổi
+import Lottie from 'lottie-react';
 
+const { Text } = Typography;
 
-const sortOptions=[
-    {name:"Price: low to high",sort:"price",order:"asc"},
-    {name:"Price: high to low",sort:"price",order:"desc"},
-]
+const sortOptions = [
+    { name: "Giá tăng dần", sort: "price", order: "asc" },
+    { name: "Giá giảm dần", sort: "price", order: "desc" },
+];
 
+const featureOptions = [
+    { key: '', label: 'Tất cả' },
+    { key: 'newest', label: 'Mới nhất' },
+    { key: 'best-selling', label: 'Bán chạy' },
+    { key: 'most-viewed', label: 'Xem nhiều' },
+    { key: 'highest-discount', label: 'Giảm giá cao' },
+];
 
-const bannerImages=[banner1,banner3,banner2,banner4]
+const bannerImages = [banner1, banner3, banner2, banner4];
 
 export const ProductList = () => {
-    const [filters,setFilters]=useState({})
-    const [page,setPage]=useState(1)
-    const [sort,setSort]=useState(null)
-    const theme=useTheme()
+    const [filters, setFilters] = useState({});
+    const [page, setPage] = useState(1);
+    const [sort, setSort] = useState(null);
+    const [feature, setFeature] = useState('');
+    const [selectedBrands, setSelectedBrands] = useState([]);
+    const [selectedCategories, setSelectedCategories] = useState([]);
 
-    const is1200=useMediaQuery(theme.breakpoints.down(1200))
-    const is800=useMediaQuery(theme.breakpoints.down(800))
-    const is700=useMediaQuery(theme.breakpoints.down(700))
-    const is600=useMediaQuery(theme.breakpoints.down(600))
-    const is500=useMediaQuery(theme.breakpoints.down(500))
-    const is488=useMediaQuery(theme.breakpoints.down(488))
+    const brands = useSelector(selectBrands);
+    const categories = useSelector(selectCategories);
+    const products = useSelector(selectProducts);
+    const totalResults = useSelector(selectProductTotalResults);
+    const loggedInUser = useSelector(selectLoggedInUser);
+    const productFetchStatus = useSelector(selectProductFetchStatus);
+    const wishlistItems = useSelector(selectWishlistItems);
+    const wishlistItemAddStatus = useSelector(selectWishlistItemAddStatus);
+    const wishlistItemDeleteStatus = useSelector(selectWishlistItemDeleteStatus);
+    const cartItemAddStatus = useSelector(selectCartItemAddStatus);
 
-    const brands=useSelector(selectBrands)
-    const categories=useSelector(selectCategories)
-    const products=useSelector(selectProducts)
-    const totalResults=useSelector(selectProductTotalResults)
-    const loggedInUser=useSelector(selectLoggedInUser)
+    const dispatch = useDispatch();
 
-    const productFetchStatus=useSelector(selectProductFetchStatus)
+    // Logic handlers (giữ nguyên)
+    // Brand filter handler
+    const handleBrandChange = (values) => {
+        setSelectedBrands(values);
+        setFilters({ ...filters, brand: values });
+    };
 
-    const wishlistItems=useSelector(selectWishlistItems)
-    const wishlistItemAddStatus=useSelector(selectWishlistItemAddStatus)
-    const wishlistItemDeleteStatus=useSelector(selectWishlistItemDeleteStatus)
+    // Category filter handler
+    const handleCategoryChange = (values) => {
+        setSelectedCategories(values);
+        setFilters({ ...filters, category: values });
+    };
 
-    const cartItemAddStatus=useSelector(selectCartItemAddStatus)
+    const handleAddRemoveFromWishlist = (e, productId) => {
+        if (e?.target?.checked) {
+            const data = { user: loggedInUser?._id, product: productId };
+            dispatch(createWishlistItemAsync(data));
+        } else {
+            const index = wishlistItems.findIndex((item) => (item.product && item.product._id) ? item.product._id === productId : item.product === productId);
+            if(index !== -1) {
+                dispatch(deleteWishlistItemByIdAsync(wishlistItems[index]._id));
+            }
+        }
+    };
+    
+    // useEffect hooks (giữ nguyên)
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: "instant" });
+    }, []);
 
-    const isProductFilterOpen=useSelector(selectProductIsFilterOpen)
+    useEffect(() => {
+        setPage(1);
+    }, [totalResults]);
 
-    const dispatch=useDispatch()
+    useEffect(() => {
+        const finalFilters = { ...filters };
+        finalFilters['pagination'] = { page: page, limit: ITEMS_PER_PAGE };
+        const selectedSort = sortOptions.find((o) => o.name === sort);
+        finalFilters['sort'] = selectedSort ? { sort: selectedSort.sort, order: selectedSort.order } : null;
+        if (feature) finalFilters['feature'] = feature;
+        if (selectedBrands.length) finalFilters['brand'] = selectedBrands;
+        if (selectedCategories.length) finalFilters['category'] = selectedCategories;
+        if (!loggedInUser?.isAdmin) {
+            finalFilters['user'] = true;
+        }
+        dispatch(fetchProductsAsync(finalFilters));
+    }, [filters, page, sort, feature, selectedBrands, selectedCategories, dispatch, loggedInUser?.isAdmin]);
 
-    const handleBrandFilters=(e)=>{
+    // Các useEffect xử lý toast (giữ nguyên)
+    useEffect(() => {
+        if (wishlistItemAddStatus === 'fulfilled') {
+            toast.success("Product added to wishlist");
+        } else if (wishlistItemAddStatus === 'rejected') {
+            toast.error("Error adding product to wishlist, please try again later");
+        }
+    }, [wishlistItemAddStatus]);
 
-        const filterSet=new Set(filters.brand)
+    useEffect(() => {
+        if (wishlistItemDeleteStatus === 'fulfilled') {
+            toast.success("Product removed from wishlist");
+        } else if (wishlistItemDeleteStatus === 'rejected') {
+            toast.error("Error removing product from wishlist, please try again later");
+        }
+    }, [wishlistItemDeleteStatus]);
 
-        if(e.target.checked){filterSet.add(e.target.value)}
-        else{filterSet.delete(e.target.value)}
+    useEffect(() => {
+        if (cartItemAddStatus === 'fulfilled') {
+            toast.success("Product added to cart");
+        } else if (cartItemAddStatus === 'rejected') {
+            toast.error("Error adding product to cart, please try again later");
+        }
+    }, [cartItemAddStatus]);
 
-        const filterArray = Array.from(filterSet);
-        setFilters({...filters,brand:filterArray})
+    useEffect(() => {
+        if (productFetchStatus === 'rejected') {
+            toast.error("Error fetching products, please try again later");
+        }
+    }, [productFetchStatus]);
+
+    // Cleanup useEffect (giữ nguyên)
+    useEffect(() => {
+        return () => {
+            dispatch(resetProductFetchStatus());
+            dispatch(resetWishlistItemAddStatus());
+            dispatch(resetWishlistItemDeleteStatus());
+            dispatch(resetCartItemAddStatus());
+        };
+    }, [dispatch]);
+
+
+    // Render loading
+    if (productFetchStatus === 'pending') {
+        return (
+            <Flex justify="center" align="center" style={{ height: 'calc(100vh - 4rem)' }}>
+                <Lottie 
+                    animationData={loadingAnimation} 
+                    style={{ width: '25rem' }} 
+                />
+            </Flex>
+        );
     }
 
-    const handleCategoryFilters=(e)=>{
-        const filterSet=new Set(filters.category)
-
-        if(e.target.checked){filterSet.add(e.target.value)}
-        else{filterSet.delete(e.target.value)}
-
-        const filterArray = Array.from(filterSet);
-        setFilters({...filters,category:filterArray})
-    }
-
-    useEffect(()=>{
-        window.scrollTo({
-            top:0,
-            behavior:"instant"
-        })
-    },[])
-
-    useEffect(()=>{
-        setPage(1)
-    },[totalResults])
-
-
-    useEffect(()=>{
-        const finalFilters={...filters}
-
-        finalFilters['pagination']={page:page,limit:ITEMS_PER_PAGE}
-        finalFilters['sort']=sort
-
-        if(!loggedInUser?.isAdmin){
-            finalFilters['user']=true
-        }
-
-        dispatch(fetchProductsAsync(finalFilters))
-
-    },[filters,page,sort])
-
-
-    const handleAddRemoveFromWishlist=(e,productId)=>{
-        if(e.target.checked){
-            const data={user:loggedInUser?._id,product:productId}
-            dispatch(createWishlistItemAsync(data))
-        }
-
-        else if(!e.target.checked){
-            const index=wishlistItems.findIndex((item)=>item.product._id===productId)
-            dispatch(deleteWishlistItemByIdAsync(wishlistItems[index]._id));
-        }
-    }
-
-    useEffect(()=>{
-        if(wishlistItemAddStatus==='fulfilled'){
-            toast.success("Product added to wishlist")
-        }
-        else if(wishlistItemAddStatus==='rejected'){
-            toast.error("Error adding product to wishlist, please try again later")
-        }
-
-    },[wishlistItemAddStatus])
-
-    useEffect(()=>{
-        if(wishlistItemDeleteStatus==='fulfilled'){
-            toast.success("Product removed from wishlist")
-        }
-        else if(wishlistItemDeleteStatus==='rejected'){
-            toast.error("Error removing product from wishlist, please try again later")
-        }
-    },[wishlistItemDeleteStatus])
-
-    useEffect(()=>{
-        if(cartItemAddStatus==='fulfilled'){
-            toast.success("Product added to cart")
-        }
-        else if(cartItemAddStatus==='rejected'){
-            toast.error("Error adding product to cart, please try again later")
-        }
-
-    },[cartItemAddStatus])
-
-    useEffect(()=>{
-        if(productFetchStatus==='rejected'){
-            toast.error("Error fetching products, please try again later")
-        }
-    },[productFetchStatus])
-
-    useEffect(()=>{
-        return ()=>{
-            dispatch(resetProductFetchStatus())
-            dispatch(resetWishlistItemAddStatus())
-            dispatch(resetWishlistItemDeleteStatus())
-            dispatch(resetCartItemAddStatus())
-        }
-    },[])
-
-
-    const handleFilterClose=()=>{
-        dispatch(toggleFilters())
-    }
-
-  return (
-    <>
-    {/* filters side bar */}
-
-    {
-        productFetchStatus==='pending'?
-        <Stack width={is500?"35vh":'25rem'} height={'calc(100vh - 4rem)'} justifyContent={'center'} marginRight={'auto'} marginLeft={'auto'}>
-            <Lottie animationData={loadingAnimation}/>
-        </Stack>
-        :
+    return (
         <>
-        <motion.div style={{position:"fixed",backgroundColor:"white",height:"100vh",padding:'1rem',overflowY:"scroll",width:is500?"100vw":"30rem",zIndex:500}}  variants={{show:{left:0},hide:{left:-500}}} initial={'hide'} transition={{ease:"easeInOut",duration:.7,type:"spring"}} animate={isProductFilterOpen===true?"show":"hide"}>
+            {/* Filter Bar UI */}
+            <Flex wrap="wrap" gap="large" align="center" style={{ marginBottom: 24, background: '#f5f5f5', padding: '16px 24px', borderRadius: 12 }}>
+                {/* Feature filter */}
+                <Radio.Group value={feature} onChange={e => setFeature(e.target.value)}>
+                    {featureOptions.map(opt => (
+                        <Radio.Button key={opt.key} value={opt.key}>{opt.label}</Radio.Button>
+                    ))}
+                </Radio.Group>
 
-            {/* fitlers section */}
-            <Stack mb={'5rem'}  sx={{scrollBehavior:"smooth",overflowY:"scroll"}}>
+                {/* Brand filter */}
+                <Select
+                    mode="multiple"
+                    allowClear
+                    placeholder="Chọn thương hiệu"
+                    style={{ minWidth: 180 }}
+                    value={selectedBrands}
+                    onChange={handleBrandChange}
+                >
+                    {brands.map(brand => (
+                        <Select.Option key={brand._id} value={brand._id}>{brand.name}</Select.Option>
+                    ))}
+                </Select>
 
+                {/* Category filter */}
+                <Select
+                    mode="multiple"
+                    allowClear
+                    placeholder="Chọn danh mục"
+                    style={{ minWidth: 180 }}
+                    value={selectedCategories}
+                    onChange={handleCategoryChange}
+                >
+                    {categories.map(category => (
+                        <Select.Option key={category._id} value={category._id}>{category.name}</Select.Option>
+                    ))}
+                </Select>
 
-                        <Typography variant='h4'>New Arrivals</Typography>
+                {/* Sort filter */}
+                <Select
+                    placeholder="Sắp xếp"
+                    style={{ minWidth: 140 }}
+                    onChange={value => setSort(value)}
+                    value={sort}
+                    allowClear
+                >
+                    {sortOptions.map(option => (
+                        <Select.Option key={option.name} value={option.name}>{option.name}</Select.Option>
+                    ))}
+                </Select>
+            </Flex>
 
-
-                            <IconButton onClick={handleFilterClose} style={{position:"absolute",top:15,right:15}}>
-                                <motion.div whileHover={{scale:1.1}} whileTap={{scale:0.9}}>
-                                    <ClearIcon fontSize='medium'/>
-                                </motion.div>
-                            </IconButton>
-
-
-                    <Stack rowGap={2} mt={4} >
-                        <Typography sx={{cursor:"pointer"}} variant='body2'>Totes</Typography>
-                        <Typography sx={{cursor:"pointer"}} variant='body2'>Backpacks</Typography>
-                        <Typography sx={{cursor:"pointer"}} variant='body2'>Travel Bags</Typography>
-                        <Typography sx={{cursor:"pointer"}} variant='body2'>Hip Bags</Typography>
-                        <Typography sx={{cursor:"pointer"}} variant='body2'>Laptop Sleeves</Typography>
-                    </Stack>
-
-                    {/* brand filters */}
-                    <Stack mt={2}>
-                        <Accordion>
-                            <AccordionSummary expandIcon={<AddIcon />}  aria-controls="brand-filters" id="brand-filters" >
-                                    <Typography>Brands</Typography>
-                            </AccordionSummary>
-
-                            <AccordionDetails sx={{p:0}}>
-                                <FormGroup onChange={handleBrandFilters}>
-                                    {
-                                        Array.isArray(brands) && brands?.map((brand)=>(
-                                            <motion.div key={brand._id} style={{width:"fit-content"}} whileHover={{x:5}} whileTap={{scale:0.9}}>
-                                                <FormControlLabel sx={{ml:1}} control={<Checkbox whileHover={{scale:1.1}} />} label={brand.name} value={brand._id} />
-                                            </motion.div>
-                                        ))
-                                    }
-                                </FormGroup>
-                            </AccordionDetails>
-                        </Accordion>
-                    </Stack>
-
-                    {/* category filters */}
-                    <Stack mt={2}>
-                        <Accordion>
-                            <AccordionSummary expandIcon={<AddIcon />}  aria-controls="brand-filters" id="brand-filters" >
-                                    <Typography>Category</Typography>
-                            </AccordionSummary>
-
-                            <AccordionDetails sx={{p:0}}>
-                                <FormGroup onChange={handleCategoryFilters}>
-                                    {
-                                        Array.isArray(categories) && categories?.map((category)=>(
-                                            <motion.div key={category._id} style={{width:"fit-content"}} whileHover={{x:5}} whileTap={{scale:0.9}}>
-                                                <FormControlLabel sx={{ml:1}} control={<Checkbox whileHover={{scale:1.1}} />} label={category.name} value={category._id} />
-                                            </motion.div>
-                                        ))
-                                    }
-                                </FormGroup>
-                            </AccordionDetails>
-                        </Accordion>
-                    </Stack>
-            </Stack>
-
-        </motion.div>
-
-        <Stack mb={'3rem'}>
-
-
+            {/* Main Content */}
+            <Space direction="vertical" size="large" style={{ width: '100%', marginBottom: '3rem' }}>
+                
                 {/* banners section */}
-                {
-                    !is600 &&
-
-                <Stack sx={{width:"100%",height:is800?"300px":is1200?"400px":"500px"}}>
-                    <ProductBanner images={bannerImages}/>
-                </Stack>
-                }
+                <div style={{ width: "100%", height: "400px" }}>
+                    <ProductBanner images={bannerImages} />
+                </div>
 
                 {/* products */}
-                <Stack rowGap={5} mt={is600?2:0}>
-
+                <Space direction="vertical" size="large" style={{ width: '100%', marginTop: '1rem' }}>
+                    
                     {/* sort options */}
-                    <Stack flexDirection={'row'} mr={'2rem'} justifyContent={'flex-end'} alignItems={'center'} columnGap={5}>
-
-                        <Stack alignSelf={'flex-end'} width={'12rem'}>
-                            <FormControl fullWidth>
-                                    <InputLabel id="sort-dropdown">Sort</InputLabel>
-                                    <Select
-                                        variant='standard'
-                                        labelId="sort-dropdown"
-                                        label="Sort"
-                                        onChange={(e)=>setSort(e.target.value)}
-                                        value={sort}
-                                    >
-                                        <MenuItem bgcolor='text.secondary' value={null}>Reset</MenuItem>
-                                        {
-                                            sortOptions.map((option)=>(
-                                                <MenuItem key={option} value={option}>{option.name}</MenuItem>
-                                            ))
-                                        }
-                                    </Select>
-                            </FormControl>
-                        </Stack>
-
-                    </Stack>
+                    <Flex justify="flex-end" style={{ paddingRight: '2rem' }}>
+                        <Select
+                            placeholder="Sort by"
+                            style={{ width: '12rem' }}
+                            onChange={(value) => setSort(value)} // AntD Select truyền value trực tiếp (we store option.name)
+                            value={sort}
+                            allowClear // Thay thế cho MenuItem 'Reset'
+                        >
+                            {sortOptions.map((option) => (
+                                <Select.Option key={option.name} value={option.name}>{option.name}</Select.Option>
+                            ))}
+                        </Select>
+                    </Flex>
 
                     {/* product grid */}
-                    <Grid gap={is700?1:2} container justifyContent={'center'} alignContent={'center'}>
-                        {
-                            products.map((product)=>(
-                                <ProductCard key={product._id} id={product._id} title={product.title} thumbnail={product.thumbnail} brand={product.brand.name} price={product.price} handleAddRemoveFromWishlist={handleAddRemoveFromWishlist}/>
-                            ))
-                        }
-                    </Grid>
+                    <Row gutter={[16, 16]} justify="center" style={{ padding: '0 1rem' }}>
+                        {products.map((product) => (
+                            <Col key={product._id}>
+                                <ProductCard
+                                    id={product._id}
+                                    title={product.title}
+                                    thumbnail={product.thumbnail}
+                                    brand={product.brand.name}
+                                    price={product.price}
+                                    discountPercentage={product.discountPercentage}
+                                    handleAddRemoveFromWishlist={handleAddRemoveFromWishlist}
+                                />
+                            </Col>
+                        ))}
+                    </Row>
 
                     {/* pagination */}
-                    <Stack alignSelf={is488?'center':'flex-end'} mr={is488?0:5} rowGap={2} p={is488?1:0}>
-                        <Pagination size={is488?'medium':'large'} page={page}  onChange={(e,page)=>setPage(page)} count={Math.ceil(totalResults/ITEMS_PER_PAGE)} variant="outlined" shape="rounded" />
-                        <Typography textAlign={'center'}>Showing {(page-1)*ITEMS_PER_PAGE+1} to {page*ITEMS_PER_PAGE>totalResults?totalResults:page*ITEMS_PER_PAGE} of {totalResults} results</Typography>
-                    </Stack>
-
-                </Stack>
-
-        </Stack>
+                    <Flex 
+                        vertical 
+                        align={'flex-end'}
+                        gap="middle" 
+                        style={{ paddingRight: '2.5rem' }}
+                    >
+                        <Pagination
+                            size={'large'}
+                            current={page}
+                            onChange={(page) => setPage(page)}
+                            total={totalResults}
+                            pageSize={ITEMS_PER_PAGE}
+                            showSizeChanger={false}
+                        />
+                        <Text>
+                            Showing {(page - 1) * ITEMS_PER_PAGE + 1} to {page * ITEMS_PER_PAGE > totalResults ? totalResults : page * ITEMS_PER_PAGE} of {totalResults} results
+                        </Text>
+                    </Flex>
+                </Space>
+            </Space>
         </>
-    }
-
-    </>
-  )
-}
+    );
+};

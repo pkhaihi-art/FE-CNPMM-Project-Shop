@@ -1,148 +1,289 @@
-import React, { useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { Link, useNavigate} from 'react-router-dom'
-import { addProductAsync, resetProductAddStatus, selectProductAddStatus,updateProductByIdAsync } from '../../products/ProductSlice'
-import { Button, FormControl, InputLabel, MenuItem, Select, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material'
-import { useForm } from "react-hook-form"
-import { selectBrands } from '../../brands/BrandSlice'
-import { selectCategories } from '../../categories/CategoriesSlice'
-import { toast } from 'react-toastify'
+import React, { useEffect, useState } from 'react';
+import {
+  Button,
+  Form,
+  Input,
+  Select,
+  Typography,
+  Card,
+  Row,
+  Col,
+  InputNumber,
+  Space,
+  message,
+  Flex
+} from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+  addProductAsync,
+  resetProductAddStatus,
+  selectProductAddStatus,
+} from '../../products/ProductSlice';
+import { selectBrands } from '../../brands/BrandSlice';
+import { selectCategories } from '../../categories/CategoriesSlice';
 
-export const AddProduct = () => {
+const { Title } = Typography;
+const { Option } = Select;
+const { TextArea } = Input;
 
-    const {register,handleSubmit,reset,formState: { errors }} = useForm()
+export const AddProduct = ({ initialValues, onFinish, isEdit, onSuccess }) => {
+  const [form] = Form.useForm();
+  const [imageCount, setImageCount] = useState(initialValues?.images?.length || 1);
+  
+  const dispatch = useDispatch();
+  const brands = useSelector(selectBrands);
+  const categories = useSelector(selectCategories);
+  const productAddStatus = useSelector(selectProductAddStatus);
+  const navigate = useNavigate();
 
-    const dispatch=useDispatch()
-    const brands=useSelector(selectBrands)
-    const categories=useSelector(selectCategories)
-    const productAddStatus=useSelector(selectProductAddStatus)
-    const navigate=useNavigate()
-    const theme=useTheme()
-    const is1100=useMediaQuery(theme.breakpoints.down(1100))
-    const is480=useMediaQuery(theme.breakpoints.down(480))
-
-    useEffect(()=>{
-        if(productAddStatus==='fullfilled'){
-            reset()
-            toast.success("New product added")
-            navigate("/admin/dashboard")
-        }
-        else if(productAddStatus==='rejected'){
-            toast.error("Error adding product, please try again later")
-        }
-    },[productAddStatus])
-
-    useEffect(()=>{
-        return ()=>{
-            dispatch(resetProductAddStatus())
-        }
-    },[])
-
-    const handleAddProduct=(data)=>{
-        const newProduct={...data,images:[data.image0,data.image1,data.image2,data.image3]}
-        delete newProduct.image0
-        delete newProduct.image1
-        delete newProduct.image2
-        delete newProduct.image3
-
-        dispatch(addProductAsync(newProduct))
+  useEffect(() => {
+    if (initialValues) {
+      // Điền sẵn dữ liệu vào form khi chỉnh sửa
+      const imagesObj = {};
+      if (initialValues.images) {
+        initialValues.images.forEach((img, i) => {
+          imagesObj[`image${i}`] = img;
+        });
+      }
+      form.setFieldsValue({ ...initialValues, ...imagesObj });
+      setImageCount(initialValues.images?.length || 1);
     }
+  }, [initialValues, form]);
 
-    
+  useEffect(() => {
+    if (!isEdit && productAddStatus === 'fulfilled') {
+      form.resetFields();
+      message.success('✅ Product added successfully!');
+      if (onSuccess) onSuccess();
+      navigate('/admin/dashboard');
+    } else if (!isEdit && productAddStatus === 'rejected') {
+      message.error('❌ Error adding product, please try again later');
+    }
+  }, [productAddStatus, form, navigate, isEdit, onSuccess]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(resetProductAddStatus());
+    };
+  }, [dispatch]);
+
+  // 3. onFinish sẽ nhận `data` khi form valid
+  const handleAddProduct = (data) => {
+    const newProduct = {
+      title: data.title,
+      description: data.description,
+      price: data.price,
+      brand: data.brand,
+      category: data.category,
+      thumbnail: data.thumbnail,
+      stockQuantity: data.stockQuantity,
+      discountPercentage: data.discountPercentage || 0,
+      images: Object.keys(data)
+        .filter(key => key.startsWith('image'))
+        .map(key => data[key])
+        .filter(Boolean)
+    };
+    if (isEdit && onFinish) {
+      onFinish(newProduct);
+      if (onSuccess) onSuccess();
+    } else {
+      dispatch(addProductAsync(newProduct));
+    }
+  };
+
   return (
-    <Stack p={'0 16px'} justifyContent={'center'} alignItems={'center'} flexDirection={'row'} >
-        
+    // 4. Sử dụng Card thay cho Paper và style/padding đơn giản
+    <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
+      <Card
+        style={{
+          width: '100%',
+          maxWidth: 900,
+          borderRadius: 8,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)', // Tương đương elevation
+        }}
+      >
+        {/* 5. Component Form của Antd bọc tất cả */}
+        <Form
+          form={form}
+          layout="vertical" // Tương đương label ở trên
+          onFinish={handleAddProduct}
+          autoComplete="off"
+        >
+          <Title level={3} style={{ color: '#1890ff', marginBottom: 24 }}>
+            {isEdit ? 'Edit Product' : 'Add New Product'}
+          </Title>
 
-        <Stack width={is1100?"100%":"60rem"} rowGap={4} mt={is480?4:6} mb={6} component={'form'} noValidate onSubmit={handleSubmit(handleAddProduct)}> 
-            
-            {/* feild area */}
-            <Stack rowGap={3}>
-                <Stack>
-                    <Typography variant='h6' fontWeight={400} gutterBottom>Title</Typography>
-                    <TextField {...register("title",{required:'Title is required'})}/>
-                </Stack> 
+          {/* 6. Sử dụng Row/Col thay cho Grid */}
+          <Row gutter={[24, 16]}>
+            {/* Title */}
+            <Col span={24}>
+              <Form.Item
+                name="title"
+                label="Title"
+                rules={[{ required: true, message: 'Title is required' }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
 
-                <Stack flexDirection={'row'} >
+            {/* Brand & Category */}
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="brand"
+                label="Brand"
+                rules={[{ required: true, message: 'Brand is required' }]}
+              >
+                <Select placeholder="Select a brand">
+                  {brands?.map((b) => (
+                    <Option key={b._id} value={b._id}>
+                      {b.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="category"
+                label="Category"
+                rules={[{ required: true, message: 'Category is required' }]}
+              >
+                <Select placeholder="Select a category">
+                  {categories?.map((c) => (
+                    <Option key={c._id} value={c._id}>
+                      {c.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
 
-                    <FormControl fullWidth>
-                        <InputLabel id="brand-selection">Brand</InputLabel>
-                        <Select {...register("brand",{required:"Brand is required"})} labelId="brand-selection" label="Brand">
-                            
-                            {/*{*/}
-                            {/*    brands.map((brand)=>(*/}
-                            {/*        <MenuItem value={brand._id}>{brand.name}</MenuItem>*/}
-                            {/*    ))*/}
-                            {/*}*/}
+            {/* Description */}
+            <Col span={24}>
+              <Form.Item
+                name="description"
+                label="Description"
+                rules={[{ required: true, message: 'Description is required' }]}
+              >
+                <TextArea rows={4} />
+              </Form.Item>
+            </Col>
 
-                        </Select>
-                    </FormControl>
+            {/* Price & Discount */}
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="price"
+                label="Price"
+                rules={[{ required: true, message: 'Price is required' }]}
+              >
+                <InputNumber style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="discountPercentage"
+                label="Discount (%)"
+                rules={[
+                  {
+                    required: true,
+                    message: 'Discount percentage is required',
+                  },
+                ]}
+              >
+                <InputNumber style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
 
+            {/* Stock & Thumbnail */}
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="stockQuantity"
+                label="Stock Quantity"
+                rules={[{ required: true, message: 'Stock is required' }]}
+              >
+                <InputNumber style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="thumbnail"
+                label="Thumbnail URL"
+                rules={[{ required: true, message: 'Thumbnail is required' }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
 
-                    <FormControl fullWidth>
-                        <InputLabel id="category-selection">Category</InputLabel>
-                        <Select {...register("category",{required:"category is required"})} labelId="category-selection" label="Category">
-                            
-                            {
-                                categories.map((category)=>(
-                                    <MenuItem value={category._id}>{category.name}</MenuItem>
-                                ))
-                            }
+            {/* Images */}
+            <Col span={24}>
+              <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
+                <Title level={5} style={{ margin: 0 }}>Product Images</Title>
+                <Button
+                  type="dashed"
+                  onClick={() => setImageCount(c => c + 1)}
+                  icon={<PlusOutlined />}
+                >
+                  Add Image
+                </Button>
+              </Flex>
+              <Space direction="vertical" style={{ width: '100%' }}>
+                {Array.from({ length: imageCount }).map((_, i) => (
+                  <Form.Item
+                    key={i}
+                    name={`image${i}`}
+                    label={
+                      <Flex justify="space-between" align="center">
+                        <span>Image {i + 1}</span>
+                        {i > 0 && (
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => {
+                              const values = form.getFieldsValue();
+                              const newValues = { ...values };
+                              delete newValues[`image${i}`];
+                              form.setFieldsValue(newValues);
+                              setImageCount(c => c - 1);
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </Flex>
+                    }
+                    rules={[{ required: i === 0, message: i === 0 ? 'At least one image is required' : undefined }]}
+                    style={{ marginBottom: 0 }}
+                  >
+                    <Input placeholder="Enter image URL" aria-label={`Image URL ${i + 1}`} />
+                  </Form.Item>
+                ))}
+              </Space>
+            </Col>
+          </Row>
 
-                        </Select>
-                    </FormControl>
-
-                </Stack>
-
-
-                <Stack>
-                    <Typography variant='h6' fontWeight={400}  gutterBottom>Description</Typography>
-                    <TextField multiline rows={4} {...register("description",{required:"Description is required"})}/>
-                </Stack>
-
-                <Stack flexDirection={'row'}>
-                    <Stack flex={1}>
-                        <Typography variant='h6' fontWeight={400}  gutterBottom>Price</Typography>
-                        <TextField type='number' {...register("price",{required:"Price is required"})}/>
-                    </Stack>
-                    <Stack flex={1}>
-                        <Typography variant='h6' fontWeight={400}  gutterBottom>Discount {is480?"%":"Percentage"}</Typography>
-                        <TextField type='number' {...register("discountPercentage",{required:"discount percentage is required"})}/>
-                    </Stack>
-                </Stack>
-
-                <Stack>
-                    <Typography variant='h6'  fontWeight={400} gutterBottom>Stock Quantity</Typography>
-                    <TextField type='number' {...register("stockQuantity",{required:"Stock Quantity is required"})}/>
-                </Stack>
-                <Stack>
-                    <Typography variant='h6'  fontWeight={400} gutterBottom>Thumbnail</Typography>
-                    <TextField {...register("thumbnail",{required:"Thumbnail is required"})}/>
-                </Stack>
-
-                <Stack>
-                    <Typography variant='h6'  fontWeight={400} gutterBottom>Product Images</Typography>
-
-                    <Stack rowGap={2}>
-   
-                        <TextField {...register("image0",{required:"Image is required"})}/>
-                        <TextField {...register("image1",{required:"Image is required"})}/>
-                        <TextField {...register("image2",{required:"Image is required"})}/>
-                        <TextField {...register("image3",{required:"Image is required"})}/>
-    
-                    </Stack>
-
-                </Stack>
-
-            </Stack>
-
-            {/* action area */}
-            <Stack flexDirection={'row'} alignSelf={'flex-end'} columnGap={is480?1:2}>
-                <Button size={is480?'medium':'large'} variant='contained' type='submit'>Add Product</Button>
-                <Button size={is480?'medium':'large'} variant='outlined' color='error' component={Link} to={'/admin/dashboard'}>Cancel</Button>
-            </Stack>
-
-        </Stack>
-
-    </Stack>
-  )
-}
+          {/* Actions */}
+          {/* 7. Sử dụng Space thay cho Stack để căn chỉnh button */}
+          <Space
+            style={{
+              width: '100%',
+              justifyContent: 'flex-end',
+              marginTop: 24,
+            }}
+          >
+            <Button danger onClick={onSuccess}>Cancel</Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={productAddStatus === 'pending'}
+            >
+              {isEdit ? 'Update Product' : 'Add Product'}
+            </Button>
+          </Space>
+        </Form>
+      </Card>
+    </div>
+  );
+};

@@ -1,221 +1,248 @@
-import { Button, FormControl, Grid, IconButton, InputLabel, MenuItem, Pagination, Select, Stack, Typography, useMediaQuery, useTheme } from '@mui/material'
-import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AddIcon from '@mui/icons-material/Add';
-import { selectBrands } from '../../brands/BrandSlice'
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import { selectCategories } from '../../categories/CategoriesSlice'
-import { ProductCard } from '../../products/components/ProductCard'
-import { deleteProductByIdAsync, fetchProductsAsync, selectProductIsFilterOpen, selectProductTotalResults, selectProducts, toggleFilters, undeleteProductByIdAsync } from '../../products/ProductSlice';
-import { Link } from 'react-router-dom';
-import {motion} from 'framer-motion'
-import ClearIcon from '@mui/icons-material/Clear';
-import { ITEMS_PER_PAGE } from '../../../constants';
+import React, { useState, useEffect } from 'react';
+import { Layout, Menu, Typography, Card, Row, Col, Statistic } from 'antd';
+import {
+  DashboardOutlined,
+  ShoppingOutlined,
+  UserOutlined,
+  ShoppingCartOutlined,
+  TagOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+} from '@ant-design/icons';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { AdminOrders } from './AdminOrders';
+import { AdminBrand } from './AdminBrand';
+import { AdminUser } from './AdminUser';
+import { AdminProducts } from './AdminProducts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+// no redux dispatch needed in this component
 
-const sortOptions=[
-    {name:"Price: low to high",sort:"price",order:"asc"},
-    {name:"Price: high to low",sort:"price",order:"desc"},
-]
+const { Header, Sider, Content } = Layout;
+const { Title } = Typography;
 
-export const AdminDashBoard = () => {
+export const AdminDashboard = () => {
+  const [collapsed, setCollapsed] = useState(false);
+  const [statistics, setStatistics] = useState({
+    users: 0,
+    products: 0,
+    categories: 0,
+    brands: 0,
+    revenue: 0,
+  });
 
-    const [filters,setFilters]=useState({})
-    const brands=useSelector(selectBrands)
-    const categories=useSelector(selectCategories)
-    const [sort,setSort]=useState(null)
-    const [page,setPage]=useState(1)
-    const products=useSelector(selectProducts)
-    const dispatch=useDispatch()
-    const theme=useTheme()
-    const is500=useMediaQuery(theme.breakpoints.down(500))
-    const isProductFilterOpen=useSelector(selectProductIsFilterOpen)
-    const totalResults=useSelector(selectProductTotalResults)
-    
-    const is1200=useMediaQuery(theme.breakpoints.down(1200))
-    const is800=useMediaQuery(theme.breakpoints.down(800))
-    const is700=useMediaQuery(theme.breakpoints.down(700))
-    const is600=useMediaQuery(theme.breakpoints.down(600))
-    const is488=useMediaQuery(theme.breakpoints.down(488))
+  const location = useLocation();
+  const navigate = useNavigate();
+  // dispatch not required here
+  const [selectedContent, setSelectedContent] = useState(
+    location.pathname.split('/')[2] || 'dashboard'
+  );
 
-    useEffect(()=>{
-        setPage(1)
-    },[totalResults])
+  // Sample data for the revenue chart
+  const revenueData = [
+    { month: 'Jan', revenue: 3000 },
+    { month: 'Feb', revenue: 4500 },
+    { month: 'Mar', revenue: 3800 },
+    { month: 'Apr', revenue: 5200 },
+    { month: 'May', revenue: 4800 },
+    { month: 'Jun', revenue: 6000 },
+  ];
 
-    useEffect(()=>{
-        const finalFilters={...filters}
+  useEffect(() => {
+    // Here you would fetch the actual statistics from your API
+    // For now using dummy data
+    setStatistics({
+      users: 150,
+      products: 300,
+      categories: 12,
+      brands: 25,
+      revenue: 25000,
+    });
+  }, []);
 
-        finalFilters['pagination']={page:page,limit:ITEMS_PER_PAGE}
-        finalFilters['sort']=sort
+  const menuItems = [
+    {
+      key: 'dashboard',
+      icon: <DashboardOutlined />,
+      label: 'Dashboard',
+    },
+    {
+      key: 'products',
+      icon: <ShoppingOutlined />,
+      label: 'Products',
+    },
+    {
+      key: 'users',
+      icon: <UserOutlined />,
+      label: 'Users',
+    },
+    {
+      key: 'orders',
+      icon: <ShoppingCartOutlined />,
+      label: 'Orders',
+    },
+    {
+      key: 'brands',
+      icon: <TagOutlined />,
+      label: 'Brands',
+    },
+  ];
 
-        dispatch(fetchProductsAsync(finalFilters))
-        
-    },[filters,sort,page])
-
-    const handleBrandFilters=(e)=>{
-
-        const filterSet=new Set(filters.brand)
-
-        if(e.target.checked){filterSet.add(e.target.value)}
-        else{filterSet.delete(e.target.value)}
-
-        const filterArray = Array.from(filterSet);
-        setFilters({...filters,brand:filterArray})
+  const handleMenuClick = ({ key }) => {
+    // Show all admin pages inside dashboard content
+    if (key === 'orders' || key === 'brands' || key === 'users' || key === 'products' || key === 'dashboard') {
+      setSelectedContent(key);
+      return;
     }
-
-    const handleCategoryFilters=(e)=>{
-        const filterSet=new Set(filters.category)
-
-        if(e.target.checked){filterSet.add(e.target.value)}
-        else{filterSet.delete(e.target.value)}
-
-        const filterArray = Array.from(filterSet);
-        setFilters({...filters,category:filterArray})
-    }
-
-    const handleProductDelete=(productId)=>{
-        dispatch(deleteProductByIdAsync(productId))
-    }
-
-    const handleProductUnDelete=(productId)=>{
-        dispatch(undeleteProductByIdAsync(productId))
-    }
-
-    const handleFilterClose=()=>{
-        dispatch(toggleFilters())
-    }
+    // No external routes needed anymore
+    const routeMap = {};
+    const path = routeMap[key] || '/admin';
+    navigate(path);
+  };
 
   return (
-    <>
-
-    <motion.div style={{position:"fixed",backgroundColor:"white",height:"100vh",padding:'1rem',overflowY:"scroll",width:is500?"100vw":"30rem",zIndex:500}}  variants={{show:{left:0},hide:{left:-500}}} initial={'hide'} transition={{ease:"easeInOut",duration:.7,type:"spring"}} animate={isProductFilterOpen===true?"show":"hide"}>
-
-        {/* fitlers section */}
-        <Stack mb={'5rem'}  sx={{scrollBehavior:"smooth",overflowY:"scroll"}}>
-
-        
-            <Typography variant='h4'>New Arrivals</Typography>
-
-
-                <IconButton onClick={handleFilterClose} style={{position:"absolute",top:15,right:15}}>
-                    <motion.div whileHover={{scale:1.1}} whileTap={{scale:0.9}}>
-                        <ClearIcon fontSize='medium'/>
-                    </motion.div>
-                </IconButton>
-
-
-        <Stack rowGap={2} mt={4} >
-            <Typography sx={{cursor:"pointer"}} variant='body2'>Totes</Typography>
-            <Typography sx={{cursor:"pointer"}} variant='body2'>Backpacks</Typography>
-            <Typography sx={{cursor:"pointer"}} variant='body2'>Travel Bags</Typography>
-            <Typography sx={{cursor:"pointer"}} variant='body2'>Hip Bags</Typography>
-            <Typography sx={{cursor:"pointer"}} variant='body2'>Laptop Sleeves</Typography>
-        </Stack>
-
-        {/* brand filters */}
-        <Stack mt={2}>
-            <Accordion>
-                <AccordionSummary expandIcon={<AddIcon />}  aria-controls="brand-filters" id="brand-filters" >
-                        <Typography>Brands</Typography>
-                </AccordionSummary>
-
-                <AccordionDetails sx={{p:0}}>
-                    <FormGroup onChange={handleBrandFilters}>
-                        {
-                            brands?.map((brand)=>(
-                                <motion.div style={{width:"fit-content"}} whileHover={{x:5}} whileTap={{scale:0.9}}>
-                                    <FormControlLabel sx={{ml:1}} control={<Checkbox whileHover={{scale:1.1}} />} label={brand.name} value={brand._id} />
-                                </motion.div>
-                            ))
-                        }
-                    </FormGroup>
-                </AccordionDetails>
-            </Accordion>
-        </Stack>
-
-        {/* category filters */}
-        <Stack mt={2}>
-            <Accordion>
-                <AccordionSummary expandIcon={<AddIcon />}  aria-controls="brand-filters" id="brand-filters" >
-                        <Typography>Category</Typography>
-                </AccordionSummary>
-
-                <AccordionDetails sx={{p:0}}>
-                    <FormGroup onChange={handleCategoryFilters}>
-                        {
-                            categories?.map((category)=>(
-                                <motion.div style={{width:"fit-content"}} whileHover={{x:5}} whileTap={{scale:0.9}}>
-                                    <FormControlLabel sx={{ml:1}} control={<Checkbox whileHover={{scale:1.1}} />} label={category.name} value={category._id} />
-                                </motion.div>
-                            ))
-                        }
-                    </FormGroup>
-                </AccordionDetails>
-            </Accordion>
-        </Stack>
-</Stack>
-
-    </motion.div>
-
-    <Stack rowGap={5} mt={is600?2:5} mb={'3rem'}>
-
-        {/* sort options */}
-        <Stack flexDirection={'row'} mr={'2rem'} justifyContent={'flex-end'} alignItems={'center'} columnGap={5}>
-
-            <Stack alignSelf={'flex-end'} width={'12rem'}>
-                <FormControl fullWidth>
-                        <InputLabel id="sort-dropdown">Sort</InputLabel>
-                        <Select
-                            variant='standard'
-                            labelId="sort-dropdown"
-                            label="Sort"
-                            onChange={(e)=>setSort(e.target.value)}
-                            value={sort}
-                        >
-                            <MenuItem bgcolor='text.secondary' value={null}>Reset</MenuItem>
-                            {
-                                sortOptions.map((option)=>(
-                                    <MenuItem key={option} value={option}>{option.name}</MenuItem>
-                                ))
-                            }
-                        </Select>
-                </FormControl>
-            </Stack>
-
-        </Stack>
-     
-        <Grid gap={2} container flex={1} justifyContent={'center'} alignContent={"center"}>
+    <Layout style={{ minHeight: '100vh' }}>
+      <Sider 
+        trigger={null} 
+        collapsible 
+        collapsed={collapsed}
+        theme="light"
+        style={{
+          boxShadow: '2px 0 8px 0 rgba(29,35,41,.05)',
+        }}
+      >
+        <div style={{ height: 32, margin: 16, background: 'rgba(0, 0, 0, 0.2)' }}>
+          {/* Logo placeholder */}
+        </div>
+        <Menu
+          theme="light"
+          mode="inline"
+          defaultSelectedKeys={["dashboard"]}
+          selectedKeys={[selectedContent || (location.pathname.split('/')[2] || 'dashboard')]}
+          items={menuItems}
+          onClick={handleMenuClick}
+        />
+      </Sider>
+      <Layout>
+        <Header 
+          style={{ 
+            padding: 0, 
+            background: '#fff',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+          }}
+        >
+          {React.createElement(
+            collapsed ? MenuUnfoldOutlined : MenuFoldOutlined,
             {
-                products.map((product)=>(
-                    <Stack>
-                        <Stack sx={{opacity:product.isDeleted?.7:1}}>
-                            <ProductCard key={product._id} id={product._id} title={product.title} thumbnail={product.thumbnail} brand={product.brand.name} price={product.price} isAdminCard={true}/>
-                        </Stack>
-                        <Stack paddingLeft={2} paddingRight={2} flexDirection={'row'} justifySelf={'flex-end'} alignSelf={'flex-end'} columnGap={is488?1:2}>
-                            <Button component={Link} to={`/admin/product-update/${product._id}`} variant='contained'>Update</Button>
-                            {
-                                product.isDeleted===true?(
-                                    <Button onClick={()=>handleProductUnDelete(product._id)} color='error' variant='outlined'>Un-delete</Button>
-                                ):(
-                                    <Button onClick={()=>handleProductDelete(product._id)} color='error' variant='outlined'>Delete</Button>
-                                )
-                            }
-                        </Stack>
-                    </Stack>
-                ))
+              className: 'trigger',
+              style: {
+                padding: '0 24px',
+                fontSize: '18px',
+                cursor: 'pointer',
+                transition: 'color 0.3s',
+              },
+              onClick: () => setCollapsed(!collapsed),
             }
-        </Grid>
+          )}
+        </Header>
+        <Content style={{ margin: '24px 16px', padding: 24, background: '#fff' }}>
+          {selectedContent === 'dashboard' && (
+            <>
+              <Title level={2} style={{ marginBottom: 24 }}>Dashboard Overview</Title>
 
-        <Stack alignSelf={is488?'center':'flex-end'} mr={is488?0:5} rowGap={2} p={is488?1:0}>
-            <Pagination size={is488?'medium':'large'} page={page}  onChange={(e,page)=>setPage(page)} count={Math.ceil(totalResults/ITEMS_PER_PAGE)} variant="outlined" shape="rounded" />
-            <Typography textAlign={'center'}>Showing {(page-1)*ITEMS_PER_PAGE+1} to {page*ITEMS_PER_PAGE>totalResults?totalResults:page*ITEMS_PER_PAGE} of {totalResults} results</Typography>
-        </Stack>    
-    
-    </Stack> 
-    </>
-  )
-}
+              {/* Statistics Cards */}
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} lg={6}>
+                  <Card>
+                    <Statistic
+                      title="Total Users"
+                      value={statistics.users}
+                      prefix={<UserOutlined />}
+                    />
+                  </Card>
+                </Col>
+                <Col xs={24} sm={12} lg={6}>
+                  <Card>
+                    <Statistic
+                      title="Total Products"
+                      value={statistics.products}
+                      prefix={<ShoppingOutlined />}
+                    />
+                  </Card>
+                </Col>
+                <Col xs={24} sm={12} lg={6}>
+                  <Card>
+                    <Statistic
+                      title="Categories"
+                      value={statistics.categories}
+                      prefix={<TagOutlined />}
+                    />
+                  </Card>
+                </Col>
+                <Col xs={24} sm={12} lg={6}>
+                  <Card>
+                    <Statistic
+                      title="Total Revenue"
+                      value={statistics.revenue}
+                      prefix="$"
+                    />
+                  </Card>
+                </Col>
+              </Row>
+
+              {/* Revenue Chart */}
+              <Card style={{ marginTop: 24 }}>
+                <Title level={4}>Revenue Overview</Title>
+                <div style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer>
+                    <BarChart
+                      data={revenueData}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="revenue" fill="#1890ff" name="Revenue" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+            </>
+          )}
+
+          {selectedContent === 'orders' && (
+            <div style={{ width: '100%' }}>
+              <AdminOrders />
+            </div>
+          )}
+
+          {selectedContent === 'brands' && (
+            <div style={{ width: '100%' }}>
+              <AdminBrand />
+            </div>
+          )}
+          {selectedContent === 'users' && (
+            <div style={{ width: '100%' }}>
+              <AdminUser />
+            </div>
+          )}
+          {selectedContent === 'products' && (
+            <div style={{ width: '100%' }}>
+              <AdminProducts />
+            </div>
+          )}
+        </Content>
+      </Layout>
+    </Layout>
+  );
+};

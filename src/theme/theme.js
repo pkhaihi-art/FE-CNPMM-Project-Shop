@@ -1,120 +1,42 @@
-import { createTheme } from "@mui/material/styles";
+// src/theme/theme.js
+import { theme as antdTheme } from 'antd';
 
-export const theme = createTheme({
-  palette: {
-    primary: {
-      main:"#000000",
-      light:"#ffffff",
-      dark:'#DB4444',
-      customBlack:"#191919"
+export const customTheme = {
+  algorithm: antdTheme.defaultAlgorithm,
+  token: {
+    // 🎨 Màu sắc tương đương MUI palette
+  // Blue Minimal style
+  colorPrimary: '#0B74FF',
+  colorTextBase: '#1A2233',
+  colorBgBase: '#F7FBFF',
+  colorError: '#DB4444',
+  colorLink: '#0B74FF',
+  colorTextHeading: '#0F1724',
+  borderRadius: 8,
+  boxShadow: '0 4px 14px rgba(2,6,23,0.06)',
+
+    // ✍️ Font
+  fontFamily: 'Poppins, sans-serif',
+  fontSize: 16, // body1
+
+  // ⚙️ Breakpoints (AntD dùng cho Grid, Layout)
+  // Use valid increasing breakpoint values (AntD defaults are close to these)
+  // Avoid setting screenXS to 0 because AntD expects internal min/max ordering.
+  // AntD typical breakpoints: xs:480, sm:576, md:768, lg:992, xl:1200, xxl:1600
+  screenXS: 480,
+  screenSM: 576,
+  screenMD: 768,
+  screenLG: 992,
+  screenXL: 1200,
+  screenXXL: 1600,
+  },
+  components: {
+    Typography: {
+      fontFamily: 'Poppins, sans-serif',
     },
-    secondary:{
-      main:"#background.paper"
+    Button: {
+      fontFamily: 'Poppins, sans-serif',
+      fontWeight: 500,
     },
   },
-
-  
-
-  breakpoints: {
-    values: {
-      xs: 0,
-      sm: 600,
-      md: 900,
-      lg: 1200,
-      xl: 1536,
-    },
-  },
-  typography: {
-    fontFamily:"Poppins, sans-serif",
-    h1: {  // -1rem rule
-      fontSize: "6rem",
-
-      "@media (max-width:960px)": {
-        fontSize: "5rem",
-      },
-      "@media (max-width:600px)": {
-        fontSize: "4rem",
-      },
-      "@media (max-width:414px)": {
-        fontSize: "2.5rem",
-      },
-    },
-    h2: {  // -7 formula
-      fontSize: "3.75rem",
-      "@media (max-width:960px)": {
-        fontSize: "3rem",
-      },
-
-      "@media (max-width:662px)": {
-        fontSize: "2.3rem",
-      },
-      "@media (max-width:414px)": {
-        fontSize: "2.2rem",
-      },
-    },
-    h3: {  // -6 formula
-      fontSize: "3rem",
-      "@media (max-width:960px)": {
-        fontSize: "2.4rem",
-      },
-      
-      "@media (max-width:662px)": {
-        fontSize: "2rem",
-      },
-      "@media (max-width:414px)": {
-        fontSize: "1.7rem",
-      },
-
-    },
-    h4: {
-       fontSize: "2.125rem",
-      "@media (max-width:960px)": {
-        fontSize: "1.5rem",
-      },
-      "@media (max-width:600px)": {
-        fontSize: "1.25rem",
-      },
-    },
-    h5: {
-      fontSize: "1.5rem",
-      "@media (max-width:960px)": {
-        fontSize: "1.25rem",
-      },
-      "@media (max-width:600px)": {
-        fontSize: "1.1rem",
-      },
-    },
-    h6: {
-      fontSize: "1.25rem",
-      "@media (max-width:960px)": {
-        fontSize: "1.1rem",
-      },
-      "@media (max-width:600px)": {
-        fontSize: "1rem",
-      },
-    },
-    body1: {
-      fontSize: "1rem",
-      "@media (max-width:960px)": {
-        fontSize: "1rem",
-      },
-      "@media (max-width:600px)": {
-        fontSize: ".9rem",
-      },
-    },
-    body2: {
-      fontSize: "1rem",
-      "@media (max-width:960px)": {
-        fontSize: "1rem",
-      },
-      "@media (max-width:600px)": {
-        fontSize: "1rem",
-      },
-      "@media (max-width:480px)": {
-        fontSize: ".97rem",
-      },
-    },
-  },
-});
-
-export default theme;
+};
