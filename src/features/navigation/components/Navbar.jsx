@@ -1,137 +1,145 @@
 import * as React from 'react';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
-import Avatar from '@mui/material/Avatar';
-import Tooltip from '@mui/material/Tooltip';
-import MenuItem from '@mui/material/MenuItem';
+import { Layout, Flex, Typography, Dropdown, Menu, Avatar, Tooltip, Badge, Button, Tag, Space, Grid, theme } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
-import { Badge, Button, Chip, Stack, useMediaQuery, useTheme } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUserInfo } from '../../user/UserSlice';
-import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import { selectCartItems } from '../../cart/CartSlice';
 import { selectLoggedInUser } from '../../auth/AuthSlice';
 import { selectWishlistItems } from '../../wishlist/WishlistSlice';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import TuneIcon from '@mui/icons-material/Tune';
 import { selectProductIsFilterOpen, toggleFilters } from '../../products/ProductSlice';
+import {
+    ShoppingCartOutlined,
+    HeartOutlined,
+    FilterOutlined,
+    UserOutlined
+} from '@ant-design/icons';
 
+const { Header } = Layout;
+const { Title, Text } = Typography;
 
+export const Navbar = ({ isProductList = false }) => {
+    const userInfo = useSelector(selectUserInfo);
+    const cartItems = useSelector(selectCartItems);
+    const loggedInUser = useSelector(selectLoggedInUser);
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const screens = Grid.useBreakpoint(); // AntD hook for responsiveness
+    const { token } = theme.useToken(); // AntD hook for theme tokens
 
-export const Navbar=({isProductList=false})=> {
-  const [anchorElNav, setAnchorElNav] = React.useState(null);
-  const [anchorElUser, setAnchorElUser] = React.useState(null);
-  const userInfo=useSelector(selectUserInfo)
-  const cartItems=useSelector(selectCartItems)
-  const loggedInUser=useSelector(selectLoggedInUser)
-  const navigate=useNavigate()
-  const dispatch=useDispatch()
-  const theme=useTheme()
-  const is480=useMediaQuery(theme.breakpoints.down(480))
+    const wishlistItems = useSelector(selectWishlistItems);
+    const isProductFilterOpen = useSelector(selectProductIsFilterOpen);
 
-  const wishlistItems=useSelector(selectWishlistItems)
-  const isProductFilterOpen=useSelector(selectProductIsFilterOpen)
+    const handleToggleFilters = () => {
+        dispatch(toggleFilters());
+    };
 
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
+    const settings = [
+        { name: "Home", to: "/" },
+        { name: 'Profile', to: loggedInUser?.isAdmin ? "/admin/profile" : "/profile" },
+        { name: loggedInUser?.isAdmin ? 'Orders' : 'My orders', to: loggedInUser?.isAdmin ? "/admin/orders" : "/orders" },
+        ...(loggedInUser?.isAdmin ? [{ name: "Brand", to: "/admin/brand" }] : []),
+        ...(loggedInUser?.isAdmin ? [{ name: "Users", to: "/admin/user" }] : []),
+        { name: 'Logout', to: "/logout" },
+    ];
 
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
+    // Build menu items for AntD Dropdown
+    const menuItems = [
+        loggedInUser?.isAdmin && {
+            key: 'add-product',
+            label: <Link to="/admin/add-product">Add new Product</Link>,
+        },
+        ...settings.map((setting) => ({
+            key: setting.to,
+            label: <Link to={setting.to}>{setting.name}</Link>,
+        })),
+    ].filter(Boolean); // Filter out false values (if not admin)
 
-  const handleToggleFilters=()=>{
-    dispatch(toggleFilters())
-  }
-
-  const settings = [
-    {name:"Home",to:"/"},
-    {name:'Profile',to:loggedInUser?.isAdmin?"/admin/profile":"/profile"},
-    {name:loggedInUser?.isAdmin?'Orders':'My orders',to:loggedInUser?.isAdmin?"/admin/orders":"/orders"},
-    ...(loggedInUser?.isAdmin ? [{ name: "Brand", to: "/admin/brand" }] : []),
-    ...(loggedInUser?.isAdmin ? [{ name: "Users", to: "/admin/user" }] : []),
-    {name:'Logout',to:"/logout"},
-  ];
-
-  return (
-    <AppBar position="sticky" sx={{backgroundColor:"white",boxShadow:"none",color:"text.primary"}}>
-        <Toolbar sx={{p:1,height:"4rem",display:"flex",justifyContent:"space-around"}}>
-
-          <Typography variant="h6" noWrap component="a" href="/" sx={{ mr: 2, display: { xs: 'none', md: 'flex' },fontWeight: 700, letterSpacing: '.3rem', color: 'inherit', textDecoration: 'none', }}>
-            MERN SHOP
-          </Typography>
-
-
-
-          <Stack flexDirection={'row'} alignItems={'center'} justifyContent={'center'} columnGap={2}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt={userInfo?.name} src="null" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
+    return (
+        <Header
+            style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 10,
+                width: '100%',
+                backgroundColor: token.colorBgBase, // 'white'
+                boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)',
+                color: token.colorText, // 'text.primary'
+                padding: '0 24px',
+                height: '4rem',
+                display: 'flex',
+                justifyContent: 'space-around',
+                alignItems: 'center',
+            }}
+        >
+            <Title
+                level={4}
+                style={{
+                    margin: 0,
+                    letterSpacing: '.3rem',
+                    display: screens.md ? 'block' : 'none', // { xs: 'none', md: 'flex' }
+                }}
             >
+                <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>
+                    MERN SHOP
+                </Link>
+            </Title>
 
-              {
-                loggedInUser?.isAdmin && 
-              
-                <MenuItem  onClick={handleCloseUserMenu}>
-                  <Typography component={Link} color={'text.primary'} sx={{textDecoration:"none"}} to="/admin/add-product" textAlign="center">Add new Product</Typography>
-                </MenuItem>
-              
-              }
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography component={Link} color={'text.primary'} sx={{textDecoration:"none"}} to={setting.to} textAlign="center">{setting.name}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-            <Typography variant='h6' fontWeight={300}>{is480?`${userInfo?.name.toString().split(" ")[0]}`:`Hey👋, ${userInfo?.name}`}</Typography>
-            {loggedInUser.isAdmin && <Button variant='contained'>Admin</Button>}
-            <Stack sx={{flexDirection:"row",columnGap:"1rem",alignItems:"center",justifyContent:"center"}}>
+            <Flex align="center" gap="middle">
+                <Dropdown menu={{ items: menuItems }} placement="bottomRight" arrow trigger={['click']}>
+                    <Tooltip title="Open settings">
+                        <Avatar
+                            alt={userInfo?.name || 'User'}
+                            src={null} // Set to null to show icon or children
+                            icon={<UserOutlined />}
+                            style={{ cursor: 'pointer' }}
+                        />
+                    </Tooltip>
+                </Dropdown>
 
-            
-            {
-            cartItems?.length>0 && 
-            <Badge  badgeContent={cartItems.length} color='error'>
-              <IconButton onClick={()=>navigate("/cart")}>
-                <ShoppingCartOutlinedIcon />
-                </IconButton>
-            </Badge>
-            }
-            
-            {
-              !loggedInUser?.isAdmin &&
-                  <Stack>
-                      <Badge badgeContent={wishlistItems?.length} color='error'>
-                          <IconButton component={Link} to={"/wishlist"}><FavoriteBorderIcon /></IconButton>
-                      </Badge>
-                  </Stack>
-            }
-            {
-              isProductList && <IconButton onClick={handleToggleFilters}><TuneIcon sx={{color:isProductFilterOpen?"black":""}}/></IconButton>
-            }
-            
-            </Stack>
-          </Stack>
-        </Toolbar>
-    </AppBar>
-  );
-}
+                <Text strong>
+                    {/* Replaced is480 with !screens.sm */}
+                    {!screens.sm
+                        ? `${userInfo?.name?.toString().split(" ")[0] || 'User'}`
+                        : `Hey👋, ${userInfo?.name || 'User'}`}
+                </Text>
+
+                {loggedInUser.isAdmin && <Tag color="blue">Admin</Tag>}
+
+                <Space size="middle">
+                    {cartItems?.length > 0 && (
+                        <Badge count={cartItems.length} color='red'>
+                            <Button
+                                type="text"
+                                shape="circle"
+                                icon={<ShoppingCartOutlined />}
+                                onClick={() => navigate("/cart")}
+                            />
+                        </Badge>
+                    )}
+
+                    {!loggedInUser?.isAdmin && (
+                        <Badge count={wishlistItems?.length} color='red'>
+                            <Link to={"/wishlist"}>
+                                <Button
+                                    type="text"
+                                    shape="circle"
+                                    icon={<HeartOutlined />}
+                                />
+                            </Link>
+                        </Badge>
+                    )}
+
+                    {isProductList && (
+                        <Button
+                            type="text"
+                            shape="circle"
+                            icon={<FilterOutlined />}
+                            onClick={handleToggleFilters}
+                            style={{ color: isProductFilterOpen ? token.colorPrimary : token.colorText }}
+                        />
+                    )}
+                </Space>
+            </Flex>
+        </Header>
+    );
+};

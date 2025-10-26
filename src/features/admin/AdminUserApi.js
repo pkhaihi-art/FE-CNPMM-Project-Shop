@@ -23,3 +23,15 @@ export const deleteUserByAdmin = async (id) => {
     const res = await axiosi.delete(`/users/admin/${id}`);
     return res.data;
 };
+
+// Block user
+export const blockUser = async (userId) => {
+    const res = await axiosi.patch(`/users/block`, { userId });
+    return res.data;
+};
+
+// Unblock user
+export const unblockUser = async (userId) => {
+    const res = await axiosi.patch(`/users/unblock`, { userId });
+    return res.data;
+};

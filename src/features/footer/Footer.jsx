@@ -1,96 +1,120 @@
-import { Box, IconButton, TextField, Typography, useMediaQuery, useTheme } from '@mui/material'
-import { Stack } from '@mui/material'
+import { Flex, Layout, Typography, Input, Button, Grid, Image, Space, theme } from 'antd'
 import React from 'react'
 import { QRCodePng, appStorePng, googlePlayPng ,facebookPng,instagramPng,twitterPng,linkedinPng} from '../../assets'
-import SendIcon from '@mui/icons-material/Send';
-import { MotionConfig, motion } from 'framer-motion';
+import { SendOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 
-
+const { Footer: AntFooter } = Layout;
+const { Title, Text } = Typography;
+const { useToken } = theme;
+const { useBreakpoint } = Grid;
 
 export const Footer = () => {
+    const { token } = useToken(); // AntD theme hook
+    const screens = useBreakpoint(); // AntD responsive hook
 
-    const theme=useTheme()
-    const is700=useMediaQuery(theme.breakpoints.down(700))
+    const labelStyles = {
+        fontWeight: 300,
+        cursor: 'pointer',
+        color: token.colorTextLightSolid, // Use AntD theme token
+    };
 
-    const labelStyles={
-        fontWeight:300,
-        cursor:'pointer'
-    }
+    const footerStyle = {
+        backgroundColor: token.colorPrimary, // Use AntD theme token
+        paddingTop: "3rem",
+        paddingLeft: !screens.md ? "1rem" : "3rem", // Use AntD breakpoint
+        paddingRight: !screens.md ? "1rem" : "3rem",
+        paddingBottom: "1.5rem",
+        color: token.colorTextLightSolid, // Use AntD theme token
+    };
 
-  return (
-    <Stack sx={{backgroundColor:theme.palette.primary.main,paddingTop:"3rem",paddingLeft:is700?"1rem":"3rem",paddingRight:is700?"1rem":"3rem",paddingBottom:"1.5rem",rowGap:"5rem",color:theme.palette.primary.light,justifyContent:"space-around"}}>
+    return (
+        <AntFooter style={footerStyle}>
+            <Flex vertical gap="5rem" justify="space-around">
 
-            {/* upper */}
-            <Stack flexDirection={'row'} rowGap={'1rem'} justifyContent={is700?"":'space-around'} flexWrap={'wrap'}>
+                {/* upper */}
+                <Flex
+                    gap={'1rem'}
+                    justify={!screens.md ? "flex-start" : 'space-around'} // Use AntD breakpoint
+                    wrap={'wrap'}
+                >
+                    <Flex vertical gap={'1rem'} style={{ padding: '1rem', minWidth: '220px' }}>
+                        <Title level={4} style={{ color: token.colorTextLightSolid, margin: 0 }}>Exclusive</Title>
+                        <Title level={5} style={{ color: token.colorTextLightSolid, margin: 0 }}>Subscribe</Title>
+                        <Text style={labelStyles}>Get 10% off your first order</Text>
+                        <Input
+                            placeholder='Enter your email'
+                            style={{ border: '1px solid white', borderRadius: "6px", backgroundColor: 'transparent' }}
+                            styles={{ input: { color: 'whitesmoke' } }} // Style the inner input
+                            addonAfter={
+                                <Button
+                                    type="text"
+                                    icon={<SendOutlined style={{ color: token.colorTextLightSolid }} />}
+                                    style={{ border: 'none' }}
+                                />
+                            }
+                        />
+                    </Flex>
 
-                <Stack rowGap={'1rem'} padding={'1rem'}>
-                    <Typography variant='h6' fontSize={'1.5rem'}>Exclusive</Typography>
-                    <Typography variant='h6'>Subscribe</Typography>
-                    <Typography sx={labelStyles}>Get 10% off your first order</Typography>
-                    <TextField placeholder='Enter your email' sx={{border:'1px solid white',borderRadius:"6px"}} InputProps={{endAdornment:<IconButton><SendIcon sx={{color:theme.palette.primary.light}}/></IconButton>,style:{color:"whitesmoke"}}}/>
-                </Stack>
+                    <Flex vertical gap={'1rem'} style={{ padding: '1rem', minWidth: '220px' }}>
+                        <Title level={5} style={{ color: token.colorTextLightSolid, margin: 0 }}>Support</Title>
+                        <Text style={labelStyles}>11th Main Street, Dhaka, DH 1515, California.</Text>
+                        <Text style={labelStyles}>exclusive@gmail.com</Text>
+                        <Text style={labelStyles}>+88015-88888-9999</Text>
+                    </Flex>
 
-                <Stack rowGap={'1rem'} padding={'1rem'}>
-                    <Typography variant='h6'>Support</Typography>
-                    <Typography sx={labelStyles}>11th Main Street, Dhaka,  DH 1515, California.</Typography>
-                    <Typography sx={labelStyles}>exclusive@gmail.com</Typography>
-                    <Typography sx={labelStyles}>+88015-88888-9999</Typography>
-                </Stack>
+                    <Flex vertical gap={'1rem'} style={{ padding: '1rem', minWidth: '150px' }}>
+                        <Title level={5} style={{ color: token.colorTextLightSolid, margin: 0 }}>Account</Title>
+                        <Text style={labelStyles}>My Account</Text>
+                        <Text style={labelStyles}>Login / Register</Text>
+                        <Text style={labelStyles}>Cart</Text>
+                        <Text style={labelStyles}>Wishlist</Text>
+                        <Text style={labelStyles}>Shop</Text>
+                    </Flex>
 
-                <Stack rowGap={'1rem'} padding={'1rem'}>
-                    <Typography  variant='h6'>Account</Typography>
-                    <Typography sx={labelStyles}>My Account</Typography>
-                    <Typography sx={labelStyles}>Login / Register</Typography>
-                    <Typography sx={labelStyles}>Cart</Typography>
-                    <Typography sx={labelStyles}>Wishlist</Typography>
-                    <Typography sx={labelStyles}>Shop</Typography>
-                </Stack>
+                    <Flex vertical gap={'1rem'} style={{ padding: '1rem', minWidth: '150px' }}>
+                        <Title level={5} style={{ color: token.colorTextLightSolid, margin: 0 }}>Quick Links</Title>
+                        <Text style={labelStyles}>Privacy Policy</Text>
+                        <Text style={labelStyles}>Terms Of Use</Text>
+                        <Text style={labelStyles}>FAQ</Text>
+                        <Text style={labelStyles}>Contact</Text>
+                    </Flex>
 
-                <Stack rowGap={'1rem'} padding={'1rem'}>
-                    <Typography  variant='h6'>Quick Links</Typography>
-                    <Typography sx={labelStyles}>Privacy Policy</Typography>
-                    <Typography sx={labelStyles}>Terms Of Use</Typography>
-                    <Typography sx={labelStyles}>FAQ</Typography>
-                    <Typography sx={labelStyles}>Contact</Typography>
-                </Stack>
+                    <Flex vertical gap={'1rem'} style={{ padding: '1rem', minWidth: '220px' }}>
+                        <Title level={5} style={{ color: token.colorTextLightSolid, margin: 0 }}>Download App</Title>
+                        <Text style={{ ...labelStyles, color: "gray", fontWeight: 500 }}>Save $3 with App New User Only</Text>
+                        <Flex gap={'.5rem'}>
+                            <Image
+                                src={QRCodePng}
+                                width={100}
+                                height={100}
+                                alt="QR Code"
+                                preview={false}
+                                style={{ objectFit: 'contain' }}
+                            />
+                            <Flex vertical justify={'space-around'}>
+                                <img style={{ width: "100%", height: "auto", cursor: "pointer" }} src={googlePlayPng} alt="GooglePlay" />
+                                <img style={{ width: "100%", height: 'auto', cursor: "pointer" }} src={appStorePng} alt="AppStore" />
+                            </Flex>
+                        </Flex>
+                        
+                        {/* Replaced MotionConfig with AntD's Space component */}
+                        <Space size="large" style={{ marginTop: '.6rem' }}>
+                            <img style={{ cursor: "pointer", width: 24, height: 24 }} src={facebookPng} alt="Facebook" />
+                            <img style={{ cursor: "pointer", width: 24, height: 24 }} src={twitterPng} alt="Twitter" />
+                            <img style={{ cursor: "pointer", width: 24, height: 24 }} src={instagramPng} alt="Instagram" />
+                            <img style={{ cursor: "pointer", width: 24, height: 24 }} src={linkedinPng} alt="Linkedin" />
+                        </Space>
+                    </Flex>
+                </Flex>
 
-                <Stack rowGap={'1rem'} padding={'1rem'}>
-                    <Typography  variant='h6'>Download App</Typography>
-                    <Typography sx={{...labelStyles,color:"graytext",fontWeight:500}}>Save $3 with App New User Only</Typography>
-                    <Stack flexDirection={'row'} columnGap={'.5rem'}>
-
-                        <Box width={'100px'} height={"100px"}>
-                            <img src={QRCodePng} height={'100%'} width={'100%'} style={{objectFit:'contain'}} alt="QR Code"/>
-                        </Box>
-
-                        <Stack justifyContent={'space-around'}>
-                            <Stack>
-                                <img style={{width:"100%",height:"100%",cursor:"pointer"}} src={googlePlayPng} alt="GooglePlay" />
-                            </Stack>
-                            <Stack>
-                                <img style={{width:"100%",height:'100%',cursor:"pointer"}} src={appStorePng} alt="AppStore" />
-                            </Stack>
-                        </Stack>
-                    </Stack>
-
-                    <Stack mt={.6} flexDirection={'row'} columnGap={'2rem'}>
-                        <MotionConfig whileHover={{scale:1.1}} whileTap={{scale:1}}>
-                            <motion.img style={{cursor:"pointer"}} src={facebookPng} alt="Facebook" />
-                            <motion.img style={{cursor:"pointer"}} src={twitterPng} alt="Twitter" />
-                            <motion.img style={{cursor:"pointer"}} src={instagramPng} alt="Instagram" />
-                            <motion.img style={{cursor:"pointer"}} src={linkedinPng} alt="Linkedin" />
-                        </MotionConfig>
-                    </Stack>
-                </Stack>
-
-            </Stack>
-
-            {/* lower */}
-            <Stack alignSelf={"center"}>
-                <Typography color={'GrayText'}>&copy; Mern Store {new Date().getFullYear()}. All right reserved</Typography>
-            </Stack>
-
-    </Stack>
-  )
+                {/* lower */}
+                <Flex align="center" justify="center">
+                    <Text type="secondary" style={{ color: 'GrayText' }}>
+                        &copy; Mern Store {new Date().getFullYear()}. All right reserved
+                    </Text>
+                </Flex>
+            </Flex>
+        </AntFooter>
+    )
 }

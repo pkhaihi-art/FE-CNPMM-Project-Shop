@@ -1,119 +1,169 @@
-import { LoadingButton } from '@mui/lab'
-import { Button, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material'
-import React, { useState } from 'react'
-import { useForm } from "react-hook-form"
-import { useDispatch, useSelector } from 'react-redux'
-import { deleteAddressByIdAsync, selectAddressErrors, selectAddressStatus, updateAddressByIdAsync } from '../AddressSlice'
+import { Button, Card, Flex, Input, Typography, Space } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { useForm } from "react-hook-form";
+import { useDispatch, useSelector } from 'react-redux';
+import { deleteAddressByIdAsync, selectAddressErrors, selectAddressStatus, updateAddressByIdAsync } from '../AddressSlice';
+
+const { Title, Text } = Typography;
 
 export const Address = ({id,type,street,postalCode,country,phoneNumber,state,city}) => {
-
-    const theme=useTheme()
-    const dispatch=useDispatch()
-    const {register,handleSubmit,watch,reset,formState: { errors }} = useForm()
-    const [edit,setEdit]=useState(false)
-    const [open, setOpen] = useState(false);
-    const status=useSelector(selectAddressStatus)
-    const error=useSelector(selectAddressErrors)
     
-    const is480=useMediaQuery(theme.breakpoints.down(480))
+    const dispatch = useDispatch();
+    const { register, handleSubmit, reset, formState: { errors } } = useForm({
+        defaultValues: {
+            type,
+            street,
+            postalCode,
+            country,
+            phoneNumber,
+            state,
+            city
+        }
+    });
 
-    const handleRemoveAddress=()=>{
-        dispatch(deleteAddressByIdAsync(id))
+    const [edit, setEdit] = useState(false);
+    const status = useSelector(selectAddressStatus);
+
+    // Cập nhật giá trị mặc định của form khi props thay đổi
+    // và khi người dùng nhấn Cancel (setEdit(false)).
+    useEffect(() => {
+        if (!edit) {
+            reset({
+                type,
+                street,
+                postalCode,
+                country,
+                phoneNumber,
+                state,
+                city
+            });
+        }
+    }, [type, street, postalCode, country, phoneNumber, state, city, reset, edit]);
+
+
+    const handleRemoveAddress = () => {
+        dispatch(deleteAddressByIdAsync(id));
     }
 
-    const handleUpdateAddress=(data)=>{
-        const update={...data,_id:id}
-        setEdit(false)
+    const handleUpdateAddress = (data) => {
+        const update = { ...data, _id: id };
         dispatch(updateAddressByIdAsync(update))
+            .then(() => setEdit(false)); 
     }
 
-
-  return (
-    <Stack width={'100%'} p={is480?0:1}>
-                                        
-        {/* address type */}
-        <Stack color={'whitesmoke'} p={'.5rem'} borderRadius={'.2rem'} bgcolor={theme.palette.primary.main}>
-            <Typography>{type?.toUpperCase()}</Typography>
-        </Stack>
-
-        {/* address details */}
-        <Stack p={2} position={'relative'} flexDirection={'column'} rowGap={1} component={'form'} noValidate onSubmit={handleSubmit(handleUpdateAddress)}>
-
-            {/* if the edit is true then this update from shows*/}
-            {
-                edit?
-                (   
-                    // update address form
-                    <Stack rowGap={2}>
-                        
-                        <Stack>
-                            <Typography gutterBottom>Type</Typography>
-                            <TextField {...register("type",{required:true,value:type})}/>
-                        </Stack>
-
-
-                        <Stack>
-                            <Typography gutterBottom>Street</Typography>
-                            <TextField {...register("street",{required:true,value:street})}/>
-                        </Stack>
-
-                        <Stack>
-                            <Typography gutterBottom>Postal Code</Typography>
-                            <TextField type='number' {...register("postalCode",{required:true,value:postalCode})}/>
-                        </Stack>
-
-                        <Stack>
-                            <Typography gutterBottom>Country</Typography>
-                            <TextField {...register("country",{required:true,value:country})}/>
-                        </Stack>
-
-                        <Stack>
-                            <Typography  gutterBottom>Phone Number</Typography>
-                            <TextField type='number' {...register("phoneNumber",{required:true,value:phoneNumber})}/>
-                        </Stack>
-
-                        <Stack>
-                            <Typography gutterBottom>State</Typography>
-                            <TextField {...register("state",{required:true,value:state})}/>
-                        </Stack>
-
-                        <Stack>
-                            <Typography gutterBottom>City</Typography>
-                            <TextField {...register("city",{required:true,value:city})}/>
-                        </Stack>
-                    </Stack>
-                ):(
-                <>
-                <Typography>Street - {street}</Typography>
-                <Typography>Postal Code- {postalCode}</Typography>
-                <Typography>Country - {country}</Typography>
-                <Typography>Phone Number - {phoneNumber}</Typography>
-                <Typography>State - {state}</Typography>
-                <Typography>City - {city}</Typography>
-                </>
-                )
+    return (
+        <Card 
+            style={{ width: '100%' }} 
+            title={
+                <Title level={5} style={{ margin: 0, color: 'white' }}>
+                    {type?.toUpperCase()}
+                </Title>
             }
+            headStyle={{ backgroundColor: '#1890ff', color: 'white' }} 
+            bodyStyle={{ padding: '16px' }}
+        >
+            
+            <form onSubmit={handleSubmit(handleUpdateAddress)} noValidate>
+                <Flex vertical gap={10}>
+                    {
+                        edit ? (
+                            <Flex vertical gap={10}>
+                                <Space direction="vertical" style={{ width: '100%' }}>
+                                    <Text strong>Type</Text>
+                                    <Input {...register("type", { required: true })} />
+                                </Space>
 
-            {/* action buttons */}
-            <Stack position={is480?"static":edit?"static":'absolute'} bottom={4} right={4} mt={is480?2:4} flexDirection={'row'} alignSelf={'flex-end'} columnGap={1}>
+                                <Space direction="vertical" style={{ width: '100%' }}>
+                                    <Text strong>Street</Text>
+                                    <Input {...register("street", { required: true })} />
+                                </Space>
 
-                {/* if edit is true, then save changes button is shown instead of edit*/}
-                {
-                    edit?(<LoadingButton loading={status==='pending'} size='small' type='submit' variant='contained'>Save Changes</LoadingButton>
-                    ):(<Button size='small' onClick={()=>setEdit(true)} variant='contained'>Edit</Button>)
-                }
+                                <Space direction="vertical" style={{ width: '100%' }}>
+                                    <Text strong>Postal Code</Text>
+                                    <Input {...register("postalCode", { required: true })} /> 
+                                </Space>
 
-                {/* if edit is true then cancel button is shown instead of remove */}
-                {
-                    edit?(
-                        <Button size='small' onClick={()=>{setEdit(false);reset()}} variant='outlined' color='error'>Cancel</Button>
-                    ):(
-                        <LoadingButton loading={status==='pending'} size='small' onClick={handleRemoveAddress} variant='outlined' color='error' >Remove</LoadingButton>
-                    )
-                }
-            </Stack>
-        </Stack>
+                                <Space direction="vertical" style={{ width: '100%' }}>
+                                    <Text strong>Country</Text>
+                                    <Input {...register("country", { required: true })} />
+                                </Space>
 
-    </Stack>
-  )
+                                <Space direction="vertical" style={{ width: '100%' }}>
+                                    <Text strong>Phone Number</Text>
+                                    <Input {...register("phoneNumber", { required: true })} />
+                                </Space>
+
+                                <Space direction="vertical" style={{ width: '100%' }}>
+                                    <Text strong>State</Text>
+                                    <Input {...register("state", { required: true })} />
+                                </Space>
+
+                                <Space direction="vertical" style={{ width: '100%' }}>
+                                    <Text strong>City</Text>
+                                    <Input {...register("city", { required: true })} />
+                                </Space>
+                            </Flex>
+                        ) : (
+                            <Flex vertical gap={5}>
+                                <Text>Street - **{street}**</Text>
+                                <Text>Postal Code - **{postalCode}**</Text>
+                                <Text>Country - **{country}**</Text>
+                                <Text>Phone Number - **{phoneNumber}**</Text>
+                                <Text>State - **{state}**</Text>
+                                <Text>City - **{city}**</Text>
+                            </Flex>
+                        )
+                    }
+
+                    {/* Action Buttons */}
+                    <Flex justify="flex-end" style={{ marginTop: '16px' }}>
+                        <Space>
+                            {
+                                edit ? (
+                                    <Button 
+                                        type="primary" 
+                                        htmlType="submit" 
+                                        loading={status === 'pending'} 
+                                        size='small'
+                                    >
+                                        Save Changes
+                                    </Button>
+                                ) : (
+                                    <Button 
+                                        type="primary" 
+                                        onClick={() => setEdit(true)} 
+                                        size='small'
+                                    >
+                                        Edit
+                                    </Button>
+                                )
+                            }
+
+                            {
+                                edit ? (
+                                    <Button 
+                                        onClick={() => { setEdit(false); reset(); }} 
+                                        danger 
+                                        size='small'
+                                    >
+                                        Cancel
+                                    </Button>
+                                ) : (
+                                    <Button 
+                                        onClick={handleRemoveAddress} 
+                                        loading={status === 'pending'} 
+                                        danger 
+                                        size='small' 
+                                        type="default" 
+                                    >
+                                        Remove
+                                    </Button>
+                                )
+                            }
+                        </Space>
+                    </Flex>
+                </Flex>
+            </form>
+        </Card>
+    );
 }

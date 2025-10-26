@@ -1,131 +1,173 @@
-import {FormHelperText, Stack, TextField, Typography,Box, useTheme, useMediaQuery} from '@mui/material'
+import { Flex, Form, Input, Button, Typography, Grid } from 'antd'
 import React, { useEffect } from 'react'
 import Lottie from 'lottie-react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useForm } from "react-hook-form"
-import { ecommerceOutlookAnimation, shoppingBagAnimation} from '../../../assets'
-import {useDispatch,useSelector} from 'react-redux'
-import { LoadingButton } from '@mui/lab';
-import {selectLoggedInUser, signupAsync,selectSignupStatus, selectSignupError, clearSignupError, resetSignupStatus} from '../AuthSlice'
+import { ecommerceOutlookAnimation } from '../../../assets'
+import { useDispatch, useSelector } from 'react-redux'
+import {
+    selectLoggedInUser,
+    signupAsync,
+    selectSignupStatus,
+    selectSignupError,
+    clearSignupError,
+    resetSignupStatus
+} from '../AuthSlice'
 import { toast } from 'react-toastify'
-import { MotionConfig , motion} from 'framer-motion'
+
+const { Title, Text } = Typography;
 
 export const Signup = () => {
-  const dispatch=useDispatch()
-  const status=useSelector(selectSignupStatus)
-  const error=useSelector(selectSignupError)
-  const loggedInUser=useSelector(selectLoggedInUser)
-  const {register,handleSubmit,reset,formState: { errors }} = useForm()
-  const navigate=useNavigate()
-  const theme=useTheme()
-  const is900=useMediaQuery(theme.breakpoints.down(900))
-  const is480=useMediaQuery(theme.breakpoints.down(480))
+    const dispatch = useDispatch()
+    const status = useSelector(selectSignupStatus)
+    const error = useSelector(selectSignupError)
+    const loggedInUser = useSelector(selectLoggedInUser)
+    const [form] = Form.useForm(); // AntD's form hook
+    const navigate = useNavigate()
+    const screens = Grid.useBreakpoint(); // AntD's responsive hook
 
-  // handles user redirection
-  useEffect(()=>{
-    if(loggedInUser && !loggedInUser?.isVerified){
-      navigate("/verify-otp")
-    }
-    else if(loggedInUser){
-      navigate("/")
-    }
-  },[loggedInUser])
-
-
-  // handles signup error and toast them
-  useEffect(()=>{
-    if(error){
-      toast.error(error.message)
-    }
-  },[error])
-
-  
-  useEffect(()=>{
-    if(status==='fullfilled'){
-      toast.success("Welcome! Verify your email to start shopping on mern-ecommerce.")
-      reset()
-    }
-    return ()=>{
-      dispatch(clearSignupError())
-      dispatch(resetSignupStatus())
-    }
-  },[status])
-
-  // this function handles signup and dispatches the signup action with credentails that api requires
-  const handleSignup=(data)=>{
-    const cred={...data}
-    delete cred.confirmPassword
-    dispatch(signupAsync(cred))
-  }
-
-  return (
-    <Stack width={'100vw'} height={'100vh'} flexDirection={'row'} sx={{overflowY:"hidden"}}>
-
-      {
-        !is900 &&
-
-        <Stack bgcolor={'black'} flex={1} justifyContent={'center'} >
-          <Lottie animationData={ecommerceOutlookAnimation}/>
-        </Stack>
-        
+    // handles user redirection
+    useEffect(() => {
+        if (loggedInUser && !loggedInUser?.isVerified) {
+            navigate("/verify-otp")
+        } else if (loggedInUser) {
+            navigate("/")
         }
+    }, [loggedInUser, navigate])
 
-        <Stack flex={1} justifyContent={'center'} alignItems={'center'}>
+    // handles signup error and toast them
+    useEffect(() => {
+        if (error) {
+            toast.error(error.message)
+        }
+    }, [error])
 
-              <Stack flexDirection={'row'} justifyContent={'center'} alignItems={'center'}>
-                  <Stack rowGap={'.4rem'}>
-                    <Typography variant='h2' sx={{wordBreak:"break-word"}} fontWeight={600}>Mern Shop</Typography>
-                    <Typography alignSelf={'flex-end'} color={'GrayText'} variant='body2'>- Shop Anything</Typography>
-                  </Stack>
+    // handles signup status and toasts
+    useEffect(() => {
+        if (status === 'fullfilled') {
+            toast.success("Signup success, please verify your email")
+            form.resetFields()
+            navigate('/verify-otp')
+        }
+        return () => {
+            dispatch(clearSignupError())
+            dispatch(resetSignupStatus())
+        }
+    }, [status, dispatch, form, navigate])
 
-              </Stack>
+    // this function handles signup and dispatches the signup action
+    const handleSignup = (values) => {
+        const cred = { ...values }
+        delete cred.confirmPassword
+        dispatch(signupAsync(cred))
+    }
 
-                <Stack mt={4} spacing={2} width={is480?"95vw":'28rem'} component={'form'} noValidate onSubmit={handleSubmit(handleSignup)}>
+    return (
+        <Flex style={{ width: '100vw', height: '100vh', overflowY: 'hidden' }}>
 
-                    <MotionConfig whileHover={{y:-5}}>
+            {/* Left Column: Animation (hidden on medium screens and below) */}
+            {screens.md && ( // Replaces !is900
+                <Flex style={{ backgroundColor: 'black', flex: 1 }} justify="center" align="center">
+                    <Lottie animationData={ecommerceOutlookAnimation} />
+                </Flex>
+            )}
 
-                      <motion.div>
-                        <TextField fullWidth {...register("name",{required:"Username is required"})} placeholder='Username'/>
-                        {errors.name && <FormHelperText error>{errors.name.message}</FormHelperText>}
-                      </motion.div>
+            {/* Right Column: Signup Form */}
+            <Flex vertical flex={1} justify="center" align="center" style={{ padding: '1rem' }}>
 
-                      <motion.div>
-                        <TextField fullWidth {...register("email",{required:"Email is required",pattern:{value:/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g,message:"Enter a valid email"}})} placeholder='Email'/>
-                        {errors.email && <FormHelperText error>{errors.email.message}</FormHelperText>}
-                      </motion.div>
+                {/* Header */}
+                <Flex vertical align="center">
+                    <Title level={2} style={{ wordBreak: "break-word", margin: 0 }}>
+                        Mern Shop
+                    </Title>
+                    <Text type="secondary" style={{ alignSelf: 'flex-end' }}>
+                        - Shop Anything
+                    </Text>
+                </Flex>
 
-                      <motion.div>
-                        <TextField type='password' fullWidth {...register("password",{required:"Password is required",pattern:{value:/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/gm,message:`at least 8 characters, must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number, Can contain special characters`}})} placeholder='Password'/>
-                        {errors.password && <FormHelperText error>{errors.password.message}</FormHelperText>}
-                      </motion.div>
-                      
-                      <motion.div>
-                        <TextField type='password' fullWidth {...register("confirmPassword",{required:"Confirm Password is required",validate:(value,fromValues)=>value===fromValues.password || "Passwords doesn't match"})} placeholder='Confirm Password'/>
-                        {errors.confirmPassword && <FormHelperText error>{errors.confirmPassword.message}</FormHelperText>}
-                      </motion.div>
-                    
-                    </MotionConfig>
+                {/* Form */}
+                <Form
+                    form={form}
+                    onFinish={handleSignup}
+                    layout="vertical"
+                    autoComplete="off"
+                    style={{
+                        width: !screens.sm ? "95vw" : '28rem', // Replaces is480
+                        marginTop: '2rem'
+                    }}
+                >
+                    <Form.Item
+                        name="name"
+                        rules={[{ required: true, message: "Username is required" }]}
+                    >
+                        <Input placeholder='Username' />
+                    </Form.Item>
 
-                    <motion.div whileHover={{scale:1.020}} whileTap={{scale:1}}>
-                      <LoadingButton sx={{height:'2.5rem'}} fullWidth loading={status==='pending'} type='submit' variant='contained'>Signup</LoadingButton>
-                    </motion.div>
+                    <Form.Item
+                        name="email"
+                        rules={[
+                            { required: true, message: "Email is required" },
+                            { type: 'email', message: "Enter a valid email" }
+                        ]}
+                    >
+                        <Input placeholder='Email' />
+                    </Form.Item>
 
-                    <Stack flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'} flexWrap={'wrap-reverse'}>
-                        <MotionConfig whileHover={{x:2}} whileTap={{scale:1.050}}>
-                            <motion.div>
-                                <Typography mr={'1.5rem'} sx={{textDecoration:"none",color:"text.primary"}} to={'/forgot-password'} component={Link}>Forgot password</Typography>
-                            </motion.div>
+                    <Form.Item
+                        name="password"
+                        rules={[
+                            { required: true, message: "Password is required" },
+                            {
+                                pattern: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/gm,
+                                message: "At least 8 characters, 1 uppercase, 1 lowercase, 1 number."
+                            }
+                        ]}
+                    >
+                        <Input.Password placeholder='Password' />
+                    </Form.Item>
 
-                            <motion.div>
-                                <Typography sx={{textDecoration:"none",color:"text.primary"}} to={'/login'} component={Link}>Already a member? <span style={{color:theme.palette.primary.dark}}>Login</span></Typography>
-                            </motion.div>
-                        </MotionConfig>
-                    </Stack>
+                    <Form.Item
+                        name="confirmPassword"
+                        dependencies={['password']} // Checks 'password' field
+                        rules={[
+                            { required: true, message: "Confirm Password is required" },
+                            ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                    if (!value || getFieldValue('password') === value) {
+                                        return Promise.resolve();
+                                    }
+                                    return Promise.reject(new Error("Passwords don't match"));
+                                },
+                            }),
+                        ]}
+                    >
+                        <Input.Password placeholder='Confirm Password' />
+                    </Form.Item>
 
-                </Stack>
+                    <Form.Item>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={status === 'pending'}
+                            block // equivalent to fullWidth
+                            style={{ height: '2.5rem' }}
+                        >
+                            Signup
+                        </Button>
+                    </Form.Item>
 
-
-        </Stack>
-    </Stack>
-  )
+                    {/* Links */}
+                    <Flex justify="space-between" align="center" wrap="wrap-reverse" gap="small">
+                        <Text>
+                            <Link to={'/forgot-password'}>Forgot password</Link>
+                        </Text>
+                        <Text>
+                            <Link to={'/login'}>
+                                Already a member? <Text type="link">Login</Text>
+                            </Link>
+                        </Text>
+                    </Flex>
+                </Form>
+            </Flex>
+        </Flex>
+    )
 }

@@ -1,188 +1,207 @@
-import { Stack, TextField, Typography ,Button, Menu, MenuItem, Select, Grid, FormControl, Radio, Paper, IconButton, Box, useTheme, useMediaQuery} from '@mui/material'
-import { LoadingButton } from '@mui/lab'
+import { Flex, Typography, Button, Radio, Card, Grid, Form, Input, InputNumber, Space } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { Cart } from '../../cart/components/Cart'
-import { useForm } from 'react-hook-form'
 import { useDispatch, useSelector } from 'react-redux'
 import { addAddressAsync, selectAddressStatus, selectAddresses } from '../../address/AddressSlice'
 import { selectLoggedInUser } from '../../auth/AuthSlice'
 import { Link, useNavigate } from 'react-router-dom'
 import { createOrderAsync, selectCurrentOrder, selectOrderStatus } from '../../order/OrderSlice'
 import { resetCartByUserIdAsync, selectCartItems } from '../../cart/CartSlice'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { ArrowLeftOutlined } from '@ant-design/icons'
 import { SHIPPING, TAXES } from '../../../constants'
-import {motion} from 'framer-motion'
+import { toast } from 'react-toastify' // Assuming toast is configured
 
+const { Title, Text } = Typography;
 
 export const Checkout = () => {
 
-    const status=''
-    const addresses=useSelector(selectAddresses)
-    const [selectedAddress,setSelectedAddress]=useState(addresses[0])
-    const [selectedPaymentMethod,setSelectedPaymentMethod]=useState('cash')
-    const { register, handleSubmit, watch, reset,formState: { errors }} = useForm()
-    const dispatch=useDispatch()
-    const loggedInUser=useSelector(selectLoggedInUser)
-    const addressStatus=useSelector(selectAddressStatus)
-    const navigate=useNavigate()
-    const cartItems=useSelector(selectCartItems)
-    const orderStatus=useSelector(selectOrderStatus)
-    const currentOrder=useSelector(selectCurrentOrder)
-    const orderTotal=cartItems.reduce((acc,item)=>(item.product.price*item.quantity)+acc,0)
-    const theme=useTheme()
-    const is900=useMediaQuery(theme.breakpoints.down(900))
-    const is480=useMediaQuery(theme.breakpoints.down(480))
-    
-    useEffect(()=>{
-        if(addressStatus==='fulfilled'){
-            reset()
-        }
-        else if(addressStatus==='rejected'){
-            alert('Error adding your address')
-        }
-    },[addressStatus])
+    const addresses = useSelector(selectAddresses)
+    // Set initial selected address, handling case where addresses might be empty
+    const [selectedAddress, setSelectedAddress] = useState(addresses[0] || null)
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash')
+    const [form] = Form.useForm(); // AntD's form hook
+    const dispatch = useDispatch()
+    const loggedInUser = useSelector(selectLoggedInUser)
+    const addressStatus = useSelector(selectAddressStatus)
+    const navigate = useNavigate()
+    const cartItems = useSelector(selectCartItems)
+    const orderStatus = useSelector(selectOrderStatus)
+    const currentOrder = useSelector(selectCurrentOrder)
+    const orderTotal = cartItems.reduce((acc, item) => (item.product.price * item.quantity) + acc, 0)
+    const screens = Grid.useBreakpoint(); // AntD's responsive hook
 
-    useEffect(()=>{
-        if(currentOrder && currentOrder?._id){
+    useEffect(() => {
+        if (addressStatus === 'fulfilled') {
+            form.resetFields()
+        } else if (addressStatus === 'rejected') {
+            toast.error('Error adding your address') // Using toast instead of alert
+        }
+    }, [addressStatus, form])
+
+    useEffect(() => {
+        if (currentOrder && currentOrder?._id) {
             dispatch(resetCartByUserIdAsync(loggedInUser?._id))
             navigate(`/order-success/${currentOrder?._id}`)
         }
-    },[currentOrder])
-    
-    const handleAddAddress=(data)=>{
-        const address={...data,user:loggedInUser._id}
+    }, [currentOrder, dispatch, loggedInUser, navigate])
+
+    // Set default selected address when addresses load
+    useEffect(() => {
+        if (addresses.length > 0 && !selectedAddress) {
+            setSelectedAddress(addresses[0]);
+        }
+    }, [addresses, selectedAddress]);
+
+    const handleAddAddress = (values) => {
+        const address = { ...values, user: loggedInUser._id }
         dispatch(addAddressAsync(address))
     }
 
-    const handleCreateOrder=()=>{
-        const order={user:loggedInUser._id,item:cartItems,address:selectedAddress,paymentMode:selectedPaymentMethod,total:orderTotal+SHIPPING+TAXES}
+    const handleCreateOrder = () => {
+        if (!selectedAddress) {
+            toast.error("Please select a shipping address.");
+            return;
+        }
+        const order = { user: loggedInUser._id, item: cartItems, address: selectedAddress, paymentMode: selectedPaymentMethod, total: orderTotal + SHIPPING + TAXES }
         dispatch(createOrderAsync(order))
     }
 
-  return (
-    <Stack flexDirection={'row'} p={2} rowGap={10} justifyContent={'center'} flexWrap={'wrap'} mb={'5rem'} mt={2} columnGap={4} alignItems={'flex-start'}>
+    return (
+        <Flex
+            justify={'center'}
+            wrap={'wrap'}
+            gap={32}
+            style={{ padding: '1rem', marginBottom: '5rem', marginTop: '1rem' }}
+            align={'flex-start'}
+        >
+            {/* left box */}
+            <Flex vertical gap={32}>
+                {/* heading */}
+                <Flex gap={screens.sm ? 8 : 4} align={'center'}>
+                    <Link to={"/cart"}>
+                        <Button type="text" icon={<ArrowLeftOutlined />} size={!screens.sm ? "middle" : 'large'} />
+                    </Link>
+                    <Title level={4} style={{ margin: 0 }}>Shipping Information</Title>
+                </Flex>
 
-        {/* left box */}
-        <Stack rowGap={4}>
+                {/* address form */}
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleAddAddress}
+                    autoComplete="off"
+                >
+                    <Flex vertical gap={16}>
+                        <Form.Item label="Type" name="type" rules={[{ required: true }]}>
+                            <Input placeholder='Eg. Home, Buisness' />
+                        </Form.Item>
 
-            {/* heading */}
-            <Stack flexDirection={'row'} columnGap={is480?0.3:1} alignItems={'center'}>
-                <motion.div  whileHover={{x:-5}}>
-                    <IconButton component={Link} to={"/cart"}><ArrowBackIcon fontSize={is480?"medium":'large'}/></IconButton>
-                </motion.div>
-                <Typography variant='h4'>Shipping Information</Typography>
-            </Stack>
+                        <Form.Item label="Street" name="street" rules={[{ required: true }]}>
+                            <Input />
+                        </Form.Item>
 
-            {/* address form */}
-            <Stack component={'form'} noValidate rowGap={2} onSubmit={handleSubmit(handleAddAddress)}>
-                    <Stack>
-                        <Typography  gutterBottom>Type</Typography>
-                        <TextField placeholder='Eg. Home, Buisness' {...register("type",{required:true})}/>
-                    </Stack>
+                        <Form.Item label="Country" name="country" rules={[{ required: true }]}>
+                            <Input />
+                        </Form.Item>
 
+                        <Form.Item label="Phone Number" name="phoneNumber" rules={[{ required: true }]}>
+                            <InputNumber style={{ width: '100%' }} />
+                        </Form.Item>
 
-                    <Stack>
-                        <Typography gutterBottom>Street</Typography>
-                        <TextField {...register("street",{required:true})}/>
-                    </Stack>
+                        <Flex gap={8} align="start">
+                            <Form.Item label="City" name="city" rules={[{ required: true }]} style={{ flex: 1 }}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item label="State" name="state" rules={[{ required: true }]} style={{ flex: 1 }}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item label="Postal Code" name="postalCode" rules={[{ required: true }]} style={{ flex: 1 }}>
+                                <InputNumber style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Flex>
 
-                    <Stack>
-                        <Typography gutterBottom>Country</Typography>
-                        <TextField {...register("country",{required:true})}/>
-                    </Stack>
+                        <Flex justify={'flex-end'} gap={8}>
+                            <Button
+                                type='primary'
+                                htmlType='submit'
+                                loading={addressStatus === 'pending'}
+                            >
+                                Add
+                            </Button>
+                            <Button danger onClick={() => form.resetFields()}>Reset</Button>
+                        </Flex>
+                    </Flex>
+                </Form>
 
-                    <Stack>
-                        <Typography  gutterBottom>Phone Number</Typography>
-                        <TextField type='number' {...register("phoneNumber",{required:true})}/>
-                    </Stack>
+                {/* existing address */}
+                <Flex vertical gap={24}>
+                    <Flex vertical>
+                        <Title level={5}>Address</Title>
+                        <Text type='secondary'>Choose from existing Addresses</Text>
+                    </Flex>
 
-                    <Stack flexDirection={'row'}>
-                        <Stack width={'100%'}>
-                            <Typography gutterBottom>City</Typography>
-                            <TextField  {...register("city",{required:true})}/>
-                        </Stack>
-                        <Stack width={'100%'}>
-                            <Typography gutterBottom>State</Typography>
-                            <TextField  {...register("state",{required:true})}/>
-                        </Stack>
-                        <Stack width={'100%'}>
-                            <Typography gutterBottom>Postal Code</Typography>
-                            <TextField type='number' {...register("postalCode",{required:true})}/>
-                        </Stack>
-                    </Stack>
+                    {/* Use Radio.Group to manage selected address */}
+                    <Radio.Group
+                        onChange={(e) => setSelectedAddress(e.target.value)}
+                        value={selectedAddress}
+                        style={{ width: '100%' }}
+                    >
+                        <Flex wrap="wrap" gap={16} style={{ width: !screens.lg ? "auto" : '50rem' }}>
+                            {
+                                addresses.map((address) => (
+                                    <Card
+                                        key={address._id}
+                                        size="small"
+                                        style={{ width: !screens.sm ? '100%' : '20rem', height: 'auto' }}
+                                    >
+                                        <Flex vertical gap={16}>
+                                            <Radio value={address}>{address.type}</Radio>
+                                            <Flex vertical style={{ paddingLeft: '28px' }}> {/* Align with radio text */}
+                                                <Text strong>{address.street}</Text>
+                                                <Text>{address.state}, {address.city}, {address.country}, {address.postalCode}</Text>
+                                                <Text>{address.phoneNumber}</Text>
+                                            </Flex>
+                                        </Flex>
+                                    </Card>
+                                ))
+                            }
+                        </Flex>
+                    </Radio.Group>
+                </Flex>
 
-                    <Stack flexDirection={'row'} alignSelf={'flex-end'} columnGap={1}>
-                        <LoadingButton loading={status==='pending'} type='submit' variant='contained'>add</LoadingButton>
-                        <Button color='error' variant='outlined' onClick={()=>reset()}>Reset</Button>
-                    </Stack>
-            </Stack>
+                {/* payment methods */}
+                <Flex vertical gap={24}>
+                    <Flex vertical>
+                        <Title level={5}>Payment Methods</Title>
+                        <Text type='secondary'>Please select a payment method</Text>
+                    </Flex>
 
-            {/* existing address */}
-            <Stack rowGap={3}>
+                    <Radio.Group
+                        onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                        value={selectedPaymentMethod}
+                    >
+                        <Flex vertical gap={16}>
+                            <Radio value={'COD'}>Cash</Radio>
+                            <Radio value={'CARD'}>Card</Radio>
+                        </Flex>
+                    </Radio.Group>
+                </Flex>
+            </Flex>
 
-                <Stack>
-                    <Typography variant='h6'>Address</Typography>
-                    <Typography variant='body2' color={'text.secondary'}>Choose from existing Addresses</Typography>
-                </Stack>
-
-                <Grid container gap={2} width={is900?"auto":'50rem'} justifyContent={'flex-start'} alignContent={'flex-start'}>
-                        {
-                            addresses.map((address,index)=>(
-                                <FormControl item >
-                                    <Stack key={address._id} p={is480?2:2} width={is480?'100%':'20rem'} height={is480?'auto':'15rem'}  rowGap={2} component={is480?Paper:Paper} elevation={1}>
-
-                                        <Stack flexDirection={'row'} alignItems={'center'}>
-                                            <Radio checked={selectedAddress===address} name='addressRadioGroup' value={selectedAddress} onChange={(e)=>setSelectedAddress(addresses[index])}/>
-                                            <Typography>{address.type}</Typography>
-                                        </Stack>
-
-                                        {/* details */}
-                                        <Stack>
-                                            <Typography>{address.street}</Typography>
-                                            <Typography>{address.state}, {address.city}, {address.country}, {address.postalCode}</Typography>
-                                            <Typography>{address.phoneNumber}</Typography>
-                                        </Stack>
-                                    </Stack>
-                                </FormControl>
-                            ))
-                        }
-                </Grid>
-
-            </Stack>
-            
-            {/* payment methods */}
-            <Stack rowGap={3}>
-
-                    <Stack>
-                        <Typography variant='h6'>Payment Methods</Typography>
-                        <Typography variant='body2' color={'text.secondary'}>Please select a payment method</Typography>
-                    </Stack>
-                    
-                    <Stack rowGap={2}>
-
-                        <Stack flexDirection={'row'} justifyContent={'flex-start'} alignItems={'center'}>
-                            <Radio value={selectedPaymentMethod} name='paymentMethod' checked={selectedPaymentMethod==='COD'} onChange={()=>setSelectedPaymentMethod('COD')}/>
-                            <Typography>Cash</Typography>
-                        </Stack>
-
-                        <Stack flexDirection={'row'} justifyContent={'flex-start'} alignItems={'center'}>
-                            <Radio value={selectedPaymentMethod} name='paymentMethod' checked={selectedPaymentMethod==='CARD'} onChange={()=>setSelectedPaymentMethod('CARD')}/>
-                            <Typography>Card</Typography>
-                        </Stack>
-
-                    </Stack>
-
-
-            </Stack>
-        </Stack>
-
-        {/* right box */}
-        <Stack  width={is900?'100%':'auto'} alignItems={is900?'flex-start':''}>
-            <Typography variant='h4'>Order summary</Typography>
-            <Cart checkout={true}/>
-            <LoadingButton fullWidth loading={orderStatus==='pending'} variant='contained' onClick={handleCreateOrder} size='large'>Pay and order</LoadingButton>
-        </Stack>
-
-    </Stack>
-  )
+            {/* right box */}
+            <Flex vertical style={{ width: !screens.lg ? '100%' : 'auto' }} align={!screens.lg ? 'flex-start' : 'auto'} gap={16}>
+                <Title level={4}>Order summary</Title>
+                <Cart checkout={true} />
+                <Button
+                    type='primary'
+                    block
+                    size='large'
+                    loading={orderStatus === 'pending'}
+                    onClick={handleCreateOrder}
+                >
+                    Pay and order
+                </Button>
+            </Flex>
+        </Flex>
+    )
 }

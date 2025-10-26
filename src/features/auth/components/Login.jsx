@@ -1,116 +1,144 @@
-import {Box, FormHelperText, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material'
+import { Flex, Form, Input, Button, Typography, Grid } from 'antd'
 import React, { useEffect } from 'react'
 import Lottie from 'lottie-react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useForm } from "react-hook-form"
-import { ecommerceOutlookAnimation, shoppingBagAnimation} from '../../../assets'
-import {useDispatch,useSelector} from 'react-redux'
-import { LoadingButton } from '@mui/lab';
-import {selectLoggedInUser,loginAsync,selectLoginStatus, selectLoginError, clearLoginError, resetLoginStatus} from '../AuthSlice'
+import { ecommerceOutlookAnimation } from '../../../assets'
+import { useDispatch, useSelector } from 'react-redux'
+import { selectLoggedInUser, loginAsync, selectLoginStatus, selectLoginError, clearLoginError, resetLoginStatus } from '../AuthSlice'
 import { toast } from 'react-toastify'
-import {MotionConfig, motion} from 'framer-motion'
+
+const { Title, Text } = Typography;
 
 export const Login = () => {
-  const dispatch=useDispatch()
-  const status=useSelector(selectLoginStatus)
-  const error=useSelector(selectLoginError)
-  const loggedInUser=useSelector(selectLoggedInUser)
-  const {register,handleSubmit,reset,formState: { errors }} = useForm()
-  const navigate=useNavigate()
-  const theme=useTheme()
-  const is900=useMediaQuery(theme.breakpoints.down(900))
-  const is480=useMediaQuery(theme.breakpoints.down(480))
-  
-  // handles user redirection
-  useEffect(()=>{
-    if(loggedInUser && loggedInUser?.isVerified){
-      navigate("/")
-    }
-    else if(loggedInUser && !loggedInUser?.isVerified){
-      navigate("/verify-otp")
-    }
-  },[loggedInUser])
+    const dispatch = useDispatch()
+    const status = useSelector(selectLoginStatus)
+    const error = useSelector(selectLoginError)
+    const loggedInUser = useSelector(selectLoggedInUser)
+    const [form] = Form.useForm(); // AntD's form hook
+    const navigate = useNavigate()
+    const screens = Grid.useBreakpoint(); // AntD's responsive hook
 
-  // handles login error and toast them
-  useEffect(()=>{
-    if(error){
-      toast.error(error.message)
-    }
-  },[error])
+    // Reset states when component mounts
+    useEffect(() => {
+        console.log('Login component mounted');
+        dispatch(clearLoginError());
+        dispatch(resetLoginStatus());
+    }, [dispatch]);
 
-  // handles login status and dispatches reset actions to relevant states in cleanup
-  useEffect(()=>{
-    if(status==='fullfilled' && loggedInUser?.isVerified===true){
-      toast.success(`Login successful`)
-      reset()
-    }
-    return ()=>{
-      dispatch(clearLoginError())
-      dispatch(resetLoginStatus())
-    }
-  },[status])
-
-  const handleLogin=(data)=>{
-    const cred={...data}
-    delete cred.confirmPassword
-    dispatch(loginAsync(cred))
-  }
-
-  return (
-    <Stack width={'100vw'} height={'100vh'} flexDirection={'row'} sx={{overflowY:"hidden"}}>
-        
-        {
-          !is900 && 
-       
-        <Stack bgcolor={'black'} flex={1} justifyContent={'center'} >
-          <Lottie animationData={ecommerceOutlookAnimation}/>
-        </Stack> 
+    // Handle redirection based on user state
+    useEffect(() => {
+        console.log('User state changed:', loggedInUser);
+        if (loggedInUser?.isVerified) {
+            navigate("/")
+        } else if (loggedInUser && !loggedInUser.isVerified) {
+            navigate("/verify-otp")
         }
+    }, [loggedInUser, navigate])
 
-        <Stack flex={1} justifyContent={'center'} alignItems={'center'}>
+    // handles login error and toast them
+    useEffect(() => {
+        if (error) {
+            toast.error(error.message)
+        }
+    }, [error])
 
-              <Stack flexDirection={'row'} justifyContent={'center'} alignItems={'center'}>
+    // Handle login status changes
+    useEffect(() => {
+        console.log('Login status:', status);
+        if (status === 'fullfilled') {
+            if (loggedInUser?.isVerified) {
+                toast.success('Login successful');
+                form.resetFields();
+            }
+        }
+    }, [status, loggedInUser, form])
 
-                <Stack rowGap={'.4rem'}>
-                  <Typography variant='h2' sx={{wordBreak:"break-word"}} fontWeight={600}>Mern Shop</Typography>
-                  <Typography alignSelf={'flex-end'} color={'GrayText'} variant='body2'>- Shop Anything</Typography>
-                </Stack>
+    // Handle form submission
+    const handleLogin = async (values) => {
+        try {
+            console.log('Login attempt with:', values);
+            await dispatch(loginAsync(values)).unwrap();
+        } catch (error) {
+            console.error('Login failed:', error);
+        }
+    }
 
-              </Stack>
+    return (
+        <Flex style={{ width: '100vw', height: '100vh', overflowY: 'hidden' }}>
 
-                <Stack mt={4} spacing={2} width={is480?"95vw":'28rem'} component={'form'} noValidate onSubmit={handleSubmit(handleLogin)}>
+            {/* Left Column: Animation (hidden on medium screens and below) */}
+            {screens.md && (
+                <Flex style={{ backgroundColor: 'black', flex: 1 }} justify="center" align="center">
+                    <Lottie animationData={ecommerceOutlookAnimation} />
+                </Flex>
+            )}
 
-                    <motion.div whileHover={{y:-5}}>
-                      <TextField fullWidth {...register("email",{required:"Email is required",pattern:{value:/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g,message:"Enter a valid email"}})} placeholder='Email'/>
-                      {errors.email && <FormHelperText sx={{mt:1}} error>{errors.email.message}</FormHelperText>}
-                    </motion.div>
+            {/* Right Column: Login Form */}
+            <Flex vertical flex={1} justify="center" align="center" style={{ padding: '1rem' }}>
 
-                    
-                    <motion.div whileHover={{y:-5}}>
-                      <TextField type='password' fullWidth {...register("password",{required:"Password is required"})} placeholder='Password'/>
-                      {errors.password && <FormHelperText sx={{mt:1}} error>{errors.password.message}</FormHelperText>}
-                    </motion.div>
-                    
-                    <motion.div whileHover={{scale:1.020}} whileTap={{scale:1}}>
-                      <LoadingButton fullWidth  sx={{height:'2.5rem'}} loading={status==='pending'} type='submit' variant='contained'>Login</LoadingButton>
-                    </motion.div>
+                {/* Header */}
+                <Flex vertical align="center">
+                    <Title level={2} style={{ wordBreak: "break-word", margin: 0 }}>
+                        Mern Shop
+                    </Title>
+                    <Text type="secondary" style={{ alignSelf: 'flex-end' }}>
+                        - Shop Anything
+                    </Text>
+                </Flex>
 
-                    <Stack flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'} flexWrap={'wrap-reverse'} >
+                {/* Form */}
+                <Form
+                    form={form}
+                    onFinish={handleLogin}
+                    layout="vertical"
+                    autoComplete="off"
+                    style={{
+                        width: !screens.sm ? "95vw" : '28rem', // Replaces is480
+                        marginTop: '2rem'
+                    }}
+                >
+                    <Form.Item
+                        name="email"
+                        rules={[
+                            { required: true, message: "Email is required" },
+                            { type: 'email', message: "Enter a valid email" }
+                        ]}
+                    >
+                        <Input placeholder='Email' />
+                    </Form.Item>
 
-                      <MotionConfig whileHover={{x:2}} whileTap={{scale:1.050}}>
-                          <motion.div>
-                              <Typography mr={'1.5rem'} sx={{textDecoration:"none",color:"text.primary"}} to={'/forgot-password'} component={Link}>Forgot password</Typography>
-                          </motion.div>
+                    <Form.Item
+                        name="password"
+                        rules={[{ required: true, message: "Password is required" }]}
+                    >
+                        <Input.Password placeholder='Password' />
+                    </Form.Item>
 
-                          <motion.div>
-                            <Typography sx={{textDecoration:"none",color:"text.primary"}} to={'/signup'} component={Link}>Don't have an account? <span style={{color:theme.palette.primary.dark}}>Register</span></Typography>
-                          </motion.div>
-                      </MotionConfig>
+                    <Form.Item>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={status === 'pending'}
+                            block // equivalent to fullWidth
+                            style={{ height: '2.5rem' }}
+                        >
+                            Login
+                        </Button>
+                    </Form.Item>
 
-                    </Stack>
-
-                </Stack>
-        </Stack>
-    </Stack>
-  )
+                    {/* Links */}
+                    <Flex justify="space-between" align="center" wrap="wrap-reverse" gap="small">
+                        <Text>
+                            <Link to={'/forgot-password'}>Forgot password</Link>
+                        </Text>
+                        <Text>
+                            <Link to={'/signup'}>
+                                Don't have an account? <Text type="link">Register</Text>
+                            </Link>
+                        </Text>
+                    </Flex>
+                </Form>
+            </Flex>
+        </Flex>
+    )
 }

@@ -1,48 +1,79 @@
-import { Box, Button, Paper, Stack, Typography, useMediaQuery, useTheme } from '@mui/material'
-import React, { useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { resetCurrentOrder, selectCurrentOrder } from '../features/order/OrderSlice'
-import { selectUserInfo } from '../features/user/UserSlice'
-import { orderSuccessAnimation } from '../assets'
-import Lottie from 'lottie-react'
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { resetCurrentOrder, selectCurrentOrder } from '../features/order/OrderSlice';
+import { selectUserInfo } from '../features/user/UserSlice';
+import { orderSuccessAnimation } from '../assets';
+import Lottie from 'lottie-react';
+import { Button, Card, Typography, Grid, theme as antdTheme } from 'antd';
+import useBreakpoint from 'antd/es/grid/hooks/useBreakpoint';
+
+const { Title, Text } = Typography;
 
 export const OrderSuccessPage = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const currentOrder = useSelector(selectCurrentOrder);
+  const userDetails = useSelector(selectUserInfo);
+  const { id } = useParams();
 
+  const token = antdTheme.useToken();
+  const screens = useBreakpoint();
+  const isMobile = !screens.md; // < 768px
 
-    const navigate=useNavigate()
-    const dispatch=useDispatch()
-    const currentOrder=useSelector(selectCurrentOrder)
-    const userDetails=useSelector(selectUserInfo)
-    const {id}=useParams()
-
-    const theme=useTheme()
-    const is480=useMediaQuery(theme.breakpoints.down(480))
-
-    useEffect(()=>{
-        if(!currentOrder){
-            navigate("/")
-        }
-    },[currentOrder])
+  useEffect(() => {
+    if (!currentOrder) {
+      navigate('/');
+    }
+  }, [currentOrder, navigate]);
 
   return (
-    <Stack width={'100vw'} height={'100vh'} justifyContent={'center'} alignItems={'center'}>
+    <Grid
+      style={{
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: token.token.colorBgBase,
+      }}
+    >
+      <Card
+        bordered={!isMobile}
+        style={{
+          boxShadow: isMobile ? 'none' : '0 2px 8px rgba(0,0,0,0.1)',
+          padding: isMobile ? 16 : 32,
+          textAlign: 'center',
+          maxWidth: 500,
+        }}
+      >
+        {/* Animation */}
+        <div style={{ width: '10rem', height: '7rem', margin: '0 auto' }}>
+          <Lottie animationData={orderSuccessAnimation} />
+        </div>
 
-        <Stack component={Paper} boxShadow={is480?'none':""} rowGap={3} elevation={1} p={is480?1:4} justifyContent={'center'} alignItems={'center'}>
+        {/* Text */}
+        <div style={{ marginTop: 24 }}>
+          <Title level={5} style={{ fontWeight: 400 }}>
+            Hey {userDetails?.name}
+          </Title>
+          <Title level={4}>Your Order #{currentOrder?._id} is confirmed</Title>
+          <Text type="secondary">Thank you for shopping with us ❤️</Text>
+        </div>
 
-            <Box width={'10rem'} height={'7rem'}>
-                <Lottie animationData={orderSuccessAnimation}></Lottie>
-            </Box>
-
-            <Stack mt={2} textAlign={'center'} justifyContent={'center'} alignItems={'center'} rowGap={1}>
-                <Typography variant='h6' fontWeight={400}>Hey {userDetails?.name}</Typography>
-                <Typography variant='h5' >Your Order #{currentOrder?._id} is confirmed</Typography>
-                <Typography variant='body2' color='text.secondary'>Thankyou for shopping with us❤️</Typography>
-            </Stack>
-
-            <Button component={Link} to={'/orders'} onClick={()=>dispatch(resetCurrentOrder())} size={is480?"small":""}  variant='contained'>Check order status in my orders</Button>
-        </Stack>
-
-    </Stack>
-  )
-}
+        {/* Button */}
+        <Button
+          type="primary"
+          block={isMobile}
+          size={isMobile ? 'middle' : 'large'}
+          style={{ marginTop: 24 }}
+          onClick={() => dispatch(resetCurrentOrder())}
+        >
+          <Link to="/orders" style={{ color: '#fff' }}>
+            Check order status in my orders
+          </Link>
+        </Button>
+      </Card>
+    </Grid>
+  );
+};

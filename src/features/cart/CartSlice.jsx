@@ -3,7 +3,7 @@ import {addToCart,fetchCartByUserId,updateCartItemById,deleteCartItemById, reset
 
 const initialState={
     status:"idle",
-    items:[],
+    items: [],
     cartItemAddStatus:"idle",
     cartItemRemoveStatus:"idle",
     errors:null,

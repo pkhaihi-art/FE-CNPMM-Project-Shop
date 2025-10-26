@@ -2,7 +2,7 @@ import { axiosi } from "../../config/axios";
 
 export const addProduct=async(data)=>{
     try {
-        const res=await axiosi.post('/products',data)
+        const res=await axiosi.post('/products/create',data)
         return res.data
     } catch (error) {
         throw error.response.data

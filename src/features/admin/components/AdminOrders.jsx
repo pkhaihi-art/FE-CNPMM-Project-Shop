@@ -1,204 +1,197 @@
-import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { getAllOrdersAsync, resetOrderUpdateStatus, selectOrderUpdateStatus, selectOrders, updateOrderByIdAsync } from '../../order/OrderSlice'
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import { Avatar, Button, Chip, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
-import { useForm } from "react-hook-form"
-import { toast } from 'react-toastify';
-import {noOrdersAnimation} from '../../../assets/index'
-import Lottie from 'lottie-react'
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllOrdersAsync, resetOrderUpdateStatus, selectOrderUpdateStatus, selectOrders, updateOrderByIdAsync } from '../../order/OrderSlice';
+import { Table, Flex, Avatar, Button, Select, Space, Typography, Tag, message } from 'antd';
+import { EditOutlined, CheckOutlined } from '@ant-design/icons';
+import { noOrdersAnimation } from '../../../assets/index';
+import Lottie from 'lottie-react';
 
+const { Text, Title } = Typography;
+const { Option } = Select;
 
 export const AdminOrders = () => {
+    const dispatch = useDispatch();
+    const orders = useSelector(selectOrders);
+    const [editIndex, setEditIndex] = useState(-1);
+    const [newStatus, setNewStatus] = useState('');
+    const orderUpdateStatus = useSelector(selectOrderUpdateStatus);
 
-  const dispatch=useDispatch()
-  const orders=useSelector(selectOrders)
-  const [editIndex,setEditIndex]=useState(-1)
-  const orderUpdateStatus=useSelector(selectOrderUpdateStatus)
-  const theme=useTheme()
-  const is1620=useMediaQuery(theme.breakpoints.down(1620))
-  const is1200=useMediaQuery(theme.breakpoints.down(1200))
-  const is820=useMediaQuery(theme.breakpoints.down(820))
-  const is480=useMediaQuery(theme.breakpoints.down(480))
+    useEffect(() => {
+        dispatch(getAllOrdersAsync());
+    }, [dispatch]);
 
-  const {register,handleSubmit,formState: { errors },} = useForm()
-
-  useEffect(()=>{
-    dispatch(getAllOrdersAsync())
-  },[dispatch])
-
-
-  useEffect(()=>{
-    if(orderUpdateStatus==='fulfilled'){
-      toast.success("Status udpated")
-    }
-    else if(orderUpdateStatus==='rejected'){
-      toast.error("Error updating order status")
-    }
-  },[orderUpdateStatus])
-
-  useEffect(()=>{
-    return ()=>{
-      dispatch(resetOrderUpdateStatus())
-    }
-  },[])
-
-
-  const handleUpdateOrder=(data)=>{
-    const update={...data,_id:orders[editIndex]._id}
-    setEditIndex(-1)
-    dispatch(updateOrderByIdAsync(update))
-  }
-
-
-  const editOptions=['Pending','Dispatched','Out for delivery','Delivered','Cancelled']
-
-  const getStatusColor=(status)=>{
-    if(status==='Pending'){
-      return {bgcolor:'#dfc9f7',color:'#7c59a4'}
-    }
-    else if(status==='Dispatched'){
-      return {bgcolor:'#feed80',color:'#927b1e'}
-    }
-    else if(status==='Out for delivery'){
-      return {bgcolor:'#AACCFF',color:'#4793AA'}
-    }
-    else if(status==='Delivered'){
-      return {bgcolor:"#b3f5ca",color:"#548c6a"}
-    }
-    else if(status==='Cancelled'){
-      return {bgcolor:"#fac0c0",color:'#cc6d72'}
-    }
-  }
-
-
-  return (
-
-    <Stack justifyContent={'center'} alignItems={'center'}>
-
-      <Stack mt={5} mb={3} component={'form'} noValidate onSubmit={handleSubmit(handleUpdateOrder)}>
-
-        {
-          orders.length?
-          <TableContainer sx={{width:is1620?"95vw":"auto",overflowX:'auto'}} component={Paper} elevation={2}>
-            <Table aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Order</TableCell>
-                  <TableCell align="left">Id</TableCell>
-                  <TableCell align="left">Item</TableCell>
-                  <TableCell align="right">Total Amount</TableCell>
-                  <TableCell align="right">Shipping Address</TableCell>
-                  <TableCell align="right">Payment Method</TableCell>
-                  <TableCell align="right">Order Date</TableCell>
-                  <TableCell align="right">Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-
-                {
-                orders.length && orders.map((order,index) => (
-
-                  <TableRow key={order._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-
-                    <TableCell component="th" scope="row">{index}</TableCell>
-                    <TableCell align="right">{order._id}</TableCell>
-                    <TableCell align="right">
-                      {
-                        order.item.map((product)=>(
-                          <Stack mt={2} flexDirection={'row'} alignItems={'center'} columnGap={2}>
-                            <Avatar src={product.product.thumbnail}></Avatar>
-                            <Typography>{product.product.title}</Typography>
-                          </Stack>
-                        ))
-                      }
-                    </TableCell>
-                    <TableCell align="right">{order.total}</TableCell>
-                    <TableCell align="right">
-                      <Stack>
-                        <Typography>{order.address[0].street}</Typography>
-                        <Typography>{order.address[0].city}</Typography>
-                        <Typography>{order.address[0].state}</Typography>
-                        <Typography>{order.address[0].postalCode}</Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell align="right">{order.paymentMode}</TableCell>
-                    <TableCell align="right">{new Date(order.createdAt).toDateString()}</TableCell>
-
-                    {/* order status */}
-                    <TableCell align="right">
-
-                        {
-                          editIndex===index?(
-
-                        <FormControl fullWidth>
-                          <InputLabel id="demo-simple-select-label">Update status</InputLabel>
-                          <Select
-                            defaultValue={order.status}
-                            labelId="demo-simple-select-label"
-                            id="demo-simple-select"
-                            label="Update status"
-                            {...register('status',{required:'Status is required'})}
-                            >
-                            
-                            {
-                              editOptions.map((option)=>(
-                                <MenuItem value={option}>{option}</MenuItem>
-                              ))
-                            }
-                          </Select>
-                        </FormControl>
-                        ):<Chip label={order.status} sx={getStatusColor(order.status)}/>
-                        }
-                      
-                    </TableCell>
-
-                    {/* actions */}
-                    <TableCell align="right">
-
-                      {
-                        editIndex===index?(
-                          <Button>
-
-                            <IconButton type='submit'><CheckCircleOutlinedIcon/></IconButton>
-                          </Button>
-                        )
-                        :
-                        <IconButton onClick={()=>setEditIndex(index)}><EditOutlinedIcon/></IconButton>
-                      }
-
-                    </TableCell>
-
-                  </TableRow>
-                ))}
-
-              </TableBody>
-            </Table>
-          </TableContainer>
-          :
-          <Stack width={is480?"auto":'30rem'} justifyContent={'center'}>
-
-            <Stack rowGap={'1rem'}>
-                <Lottie animationData={noOrdersAnimation}/>
-                <Typography textAlign={'center'} alignSelf={'center'} variant='h6' fontWeight={400}>There are no orders currently</Typography>
-            </Stack>
-              
-
-          </Stack>  
+    useEffect(() => {
+        if (orderUpdateStatus === 'fulfilled') {
+            message.success("Status updated");
+        } else if (orderUpdateStatus === 'rejected') {
+            message.error("Error updating order status");
         }
-    
-    </Stack>
-    
-    </Stack>
-  )
-}
+    }, [orderUpdateStatus]);
+
+    useEffect(() => {
+        return () => {
+            dispatch(resetOrderUpdateStatus());
+        };
+    }, [dispatch]);
+
+    const handleUpdateOrder = () => {
+        const update = { status: newStatus, _id: orders[editIndex]._id };
+        setEditIndex(-1);
+        dispatch(updateOrderByIdAsync(update));
+    };
+
+    const editOptions = ['Pending', 'Confirmed', 'Preparing', 'Out for delivery', 'Delivered', 'Cancelled', 'Cancellation Requested'];
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Pending':
+                return 'processing';
+            case 'Confirmed':
+                return 'default';
+            case 'Preparing':
+                return 'warning';
+            case 'Out for delivery':
+                return 'blue';
+            case 'Delivered':
+                return 'success';
+            case 'Cancelled':
+                return 'error';
+            case 'Cancellation Requested':
+                return 'warning';
+            default:
+                return 'default';
+        }
+    };
+
+    const columns = [
+        {
+            title: 'Order',
+            key: 'orderIndex',
+            render: (text, record, index) => index + 1,
+        },
+        {
+            title: 'Id',
+            dataIndex: '_id',
+            key: '_id',
+            ellipsis: true,
+            width: 100,
+        },
+        {
+            title: 'Item',
+            dataIndex: 'item',
+            key: 'item',
+            render: (items) => (
+                <Space direction="vertical">
+                    {items.map((product) => (
+                        <Space key={product.product._id}>
+                            <Avatar src={product.product.thumbnail} />
+                            <Text>{product.product.title}</Text>
+                        </Space>
+                    ))}
+                </Space>
+            ),
+        },
+        {
+            title: 'Total Amount',
+            dataIndex: 'total',
+            key: 'total',
+            render: (total) => `$${total}`,
+        },
+        {
+            title: 'Shipping Address',
+            dataIndex: 'address',
+            key: 'address',
+            render: (address) => (
+                <Flex vertical>
+                    <Text>{address[0].street}</Text>
+                    <Text>{address[0].city}</Text>
+                    <Text>{address[0].state}</Text>
+                    <Text>{address[0].postalCode}</Text>
+                </Flex>
+            ),
+        },
+        {
+            title: 'Payment Method',
+            dataIndex: 'paymentMode',
+            key: 'paymentMode',
+        },
+        {
+            title: 'Order Date',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            render: (date) => new Date(date).toDateString(),
+        },
+        {
+            title: 'Status',
+            dataIndex: 'status',
+            key: 'status',
+            render: (status, record, index) => {
+                if (editIndex === index) {
+                    return (
+                        <Select
+                            defaultValue={status}
+                            style={{ width: 150 }}
+                            onChange={(value) => setNewStatus(value)}
+                        >
+                            {editOptions.map((option) => (
+                                <Option key={option} value={option}>
+                                    {option}
+                                </Option>
+                            ))}
+                        </Select>
+                    );
+                }
+                return <Tag color={getStatusColor(status)}>{status}</Tag>;
+            },
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (text, record, index) => {
+                if (editIndex === index) {
+                    return (
+                        <Button
+                            type="primary"
+                            shape="circle"
+                            icon={<CheckOutlined />}
+                            onClick={handleUpdateOrder}
+                        />
+                    );
+                }
+                return (
+                    <Button
+                        shape="circle"
+                        icon={<EditOutlined />}
+                        onClick={() => {
+                            setEditIndex(index);
+                            setNewStatus(record.status);
+                        }}
+                    />
+                );
+            },
+        },
+    ];
+
+    return (
+        <Flex justify="center" align="center" style={{ width: '100%' }}>
+            <Flex vertical style={{ width: '100%', margin: '40px 0' }} align="center">
+                {orders.length ? (
+                    <Table
+                        columns={columns}
+                        dataSource={orders}
+                        rowKey="_id"
+                        style={{ width: '95vw' }}
+                        scroll={{ x: 'max-content' }}
+                    />
+                ) : (
+                    <Flex vertical align="center" style={{ maxWidth: '30rem' }}>
+                        <Lottie animationData={noOrdersAnimation} />
+                        <Title level={4} style={{ fontWeight: 400, textAlign: 'center' }}>
+                            There are no orders currently
+                        </Title>
+                    </Flex>
+                )}
+            </Flex>
+        </Flex>
+    );
+};

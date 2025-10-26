@@ -4,6 +4,8 @@ import {
     fetchUserById,
     updateUserByAdmin,
     deleteUserByAdmin,
+    blockUser,
+    unblockUser,
 } from "./AdminUserApi";
 
 const initialState = {
@@ -29,6 +31,14 @@ export const deleteUserByAdminAsync = createAsyncThunk("admin/deleteUserByAdmin"
     return await deleteUserByAdmin(id);
 });
 
+export const blockUserAsync = createAsyncThunk("admin/blockUser", async (userId) => {
+    return await blockUser(userId);
+});
+
+export const unblockUserAsync = createAsyncThunk("admin/unblockUser", async (userId) => {
+    return await unblockUser(userId);
+});
+
 const adminUserSlice = createSlice({
     name: "AdminUserSlice",
     initialState,
@@ -52,6 +62,14 @@ const adminUserSlice = createSlice({
             })
             .addCase(deleteUserByAdminAsync.fulfilled, (state, action) => {
                 state.users = state.users.filter((u) => u._id !== action.payload._id);
+            })
+            .addCase(blockUserAsync.fulfilled, (state, action) => {
+                const idx = state.users.findIndex((u) => u._id === action.payload._id);
+                if (idx !== -1) state.users[idx] = action.payload;
+            })
+            .addCase(unblockUserAsync.fulfilled, (state, action) => {
+                const idx = state.users.findIndex((u) => u._id === action.payload._id);
+                if (idx !== -1) state.users[idx] = action.payload;
             });
     },
 });
