@@ -35,7 +35,7 @@ git clone https://github.com/pkhaihi-art/FE-CNPMM-Project-Shop.git
 cd FE-CNPMM-Project-Shop
 
 # Cài đặt dependencies
-npm install
+npm install --legacy-peer-deps
 
 # Chạy ở môi trường development
 npm run dev
