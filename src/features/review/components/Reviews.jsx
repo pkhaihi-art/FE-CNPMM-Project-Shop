@@ -102,12 +102,12 @@ export const Reviews = ({ productId, averageRating }) => {
     const containerWidth = isMobile ? "90vw" : isTablet ? "25rem" : "40rem";
 
     return (
-        // Stack -> Flex (vertical)
+    // Stack -> Flex (dọc)
         <Flex vertical gap={40} align="flex-start" style={{ width: containerWidth }}>
 
-            {/* Phần tóm tắt review */}
-            <Flex vertical style={{width: '100%'}}>
-                <Title level={4} style={{ fontWeight: 400, marginBottom: '0.5em' }}>Reviews</Title>
+            {/* Phần tóm tắt đánh giá */}
+            <Flex vertical style={{ width: '100%' }}>
+                <Title level={4} style={{ fontWeight: 400, marginBottom: '0.5em' }}>Đánh giá</Title>
                 {
                     reviews?.length ? (
                         <Flex vertical gap={24}>
@@ -117,28 +117,26 @@ export const Reviews = ({ productId, averageRating }) => {
                                 {/* Rating -> Rate */}
                                 <Rate disabled allowHalf value={averageRating} />
                                 <Text type="secondary" style={{ fontSize: '1.1rem' }}>
-                                    Based on {reviews.length} {reviews.length === 1 ? "Review" : "Reviews"}
+                                    Dựa trên {reviews.length} {reviews.length === 1 ? "đánh giá" : "đánh giá"}
                                 </Text>
                             </Flex>
 
-                            {/* Thanh progress */}
+                            {/* Thanh tiến trình từng mức sao */}
                             <Flex vertical gap={16}>
                                 {
                                     [5, 4, 3, 2, 1].map((number) => {
                                         const percent = (ratingCounts[number] / reviews.length) * 100;
                                         return (
-                                            // Stack (row) -> Flex
                                             <Flex key={number} align="center" gap={8} style={{ width: '100%' }}>
-                                                <Text style={{ whiteSpace: "nowrap" }}>{number} star</Text>
-                                                {/* LinearProgress -> Progress */}
+                                                <Text style={{ whiteSpace: "nowrap" }}>{number} sao</Text>
                                                 <Progress
                                                     percent={percent}
                                                     showInfo={false}
                                                     style={{ flex: 1 }}
-                                                    strokeWidth={10} // Tương đương height: "1rem"
-                                                    strokeColor={"#1976d2"} // Màu primary mặc định của MUI
+                                                    strokeWidth={10}
+                                                    strokeColor={"#1976d2"}
                                                 />
-                                                <Text style={{minWidth: 40, textAlign: 'right'}}>{parseInt(percent)}%</Text>
+                                                <Text style={{ minWidth: 40, textAlign: 'right' }}>{parseInt(percent)}%</Text>
                                             </Flex>
                                         );
                                     })
@@ -147,13 +145,13 @@ export const Reviews = ({ productId, averageRating }) => {
                         </Flex>
                     ) : (
                         <Text type="secondary" style={{ fontSize: '1.1rem' }}>
-                            {loggedInUser?.isAdmin ? "There are no reviews currently" : "Be the one to post review first"}
+                            {loggedInUser?.isAdmin ? "Hiện chưa có đánh giá nào" : "Hãy là người đầu tiên viết đánh giá!"}
                         </Text>
                     )
                 }
             </Flex>
 
-            {/* Danh sách review */}
+            {/* Danh sách đánh giá */}
             <Flex vertical gap={16} style={{ width: '100%' }}>
                 {reviews?.map((review) => (
                     <ReviewItem 
@@ -168,54 +166,50 @@ export const Reviews = ({ productId, averageRating }) => {
                 ))}
             </Flex>
 
-            {/* Form thêm review */}
+            {/* Form thêm đánh giá */}
             {
                 writeReview ? (
-                    // Stack (form) -> Form (Antd) + Flex
                     <Form layout="vertical" onFinish={handleSubmit(handleAddReview)} style={{ width: '100%' }}>
                         <Flex vertical gap={24}>
-                            {/* TextField -> Form.Item + Input.TextArea */}
+                            {/* Trường nhập nội dung */}
                             <Form.Item
                                 validateStatus={errors.comment ? 'error' : ''}
-                                help={errors.comment ? "Comment is required" : null}
+                                help={errors.comment ? "Vui lòng nhập nội dung đánh giá" : null}
                                 style={{ marginTop: 16, width: isTablet ? '100%' : '40rem', marginBottom: 0 }}
                             >
                                 <Input.TextArea
                                     {...register("comment", { required: true })}
                                     rows={6}
-                                    placeholder='Write a review...'
+                                    placeholder='Viết cảm nhận của bạn...'
                                 />
                             </Form.Item>
 
-                            {/* Rating */}
+                            {/* Chọn số sao */}
                             <Flex vertical gap={4}>
-                                <Text>How much did you like the product?</Text>
+                                <Text>Bạn hài lòng với sản phẩm bao nhiêu?</Text>
                                 <motion.div style={{ width: "fit-content" }} whileHover={{ scale: 1.050, x: 2 }} whileTap={{ scale: 1 }}>
-                                    {/* Rating -> Rate */}
                                     <Rate
-                                        style={{ fontSize: 24 }} // Tương đương size="large"
+                                        style={{ fontSize: 24 }}
                                         value={value}
-                                        onChange={setValue} // Antd Rate truyền value trực tiếp
+                                        onChange={setValue}
                                     />
                                 </motion.div>
                             </Flex>
 
-                            {/* Nút bấm */}
+                            {/* Nút hành động */}
                             <Flex justify="flex-end" gap={8}>
                                 <MotionConfig whileTap={{ scale: 1 }} whileHover={{ scale: 1.050 }}>
                                     <motion.div>
-                                        {/* Button -> Button (danger) */}
                                         <Button
                                             danger
                                             onClick={handleCancelWrite}
                                             size={isMobile ? "small" : "middle"}
                                             style={{ textTransform: "none", fontSize: isMobile ? "" : "1rem" }}
                                         >
-                                            Cancel
+                                            Hủy
                                         </Button>
                                     </motion.div>
                                     <motion.div>
-                                        {/* LoadingButton -> Button (primary, loading) */}
                                         <Button
                                             type="primary"
                                             htmlType="submit"
@@ -223,7 +217,7 @@ export const Reviews = ({ productId, averageRating }) => {
                                             size={isMobile ? "small" : "middle"}
                                             style={{ textTransform: "none", fontSize: isMobile ? "" : "1rem" }}
                                         >
-                                            Add review
+                                            Gửi đánh giá
                                         </Button>
                                     </motion.div>
                                 </MotionConfig>
@@ -233,19 +227,18 @@ export const Reviews = ({ productId, averageRating }) => {
                 ) : (
                     !loggedInUser?.isAdmin && (
                         <motion.div onClick={() => setWriteReview(!writeReview)} whileHover={{ scale: 1.050 }} whileTap={{ scale: 1 }} style={{ width: "fit-content" }}>
-                            {/* Button -> Button (primary) */}
                             <Button
-                                type="primary" // Tương đương variant="contained"
+                                type="primary"
                                 size={isMobile ? "middle" : 'large'}
-                                icon={<EditOutlined />} // CreateIcon -> EditOutlined
+                                icon={<EditOutlined />}
                                 style={{ textTransform: "none", fontSize: "1rem", borderRadius: 6 }}
                             >
-                                Write a review
+                                Viết đánh giá
                             </Button>
                         </motion.div>
                     )
                 )
             }
         </Flex>
-    );
-}
+    )
+};

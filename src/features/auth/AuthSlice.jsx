@@ -9,6 +9,7 @@ const initialState={
     resendOtpError:null,
     signupStatus:"idle",
     signupError:null,
+    signupMessage:null,
     loginStatus:"idle",
     loginError:null,
     loggedInUser: null,
@@ -26,6 +27,16 @@ const initialState={
 
 export const signupAsync=createAsyncThunk('auth/signupAsync',async(cred)=>{
     const res=await signup(cred)
+    // Store the signup info in localStorage for persistence
+    // Prefer server-returned email, otherwise fall back to the email used for signup
+    const signupEmail = res.email || cred.email
+    if (signupEmail) {
+        localStorage.setItem('signupEmail', signupEmail)
+    }
+    // If backend returned a user object with an id, persist it so OTP flows can use it
+    if (res.user && res.user._id) {
+        localStorage.setItem('signupUserId', res.user._id)
+    }
     return res
 })
 
@@ -81,6 +92,7 @@ const authSlice=createSlice({
         },
         clearSignupError:(state)=>{
             state.signupError=null
+            state.signupMessage=null
         },
         resetLoginStatus:(state)=>{
             state.loginStatus='idle'
@@ -128,14 +140,23 @@ const authSlice=createSlice({
         builder
             .addCase(signupAsync.pending,(state)=>{
                 state.signupStatus='pending'
+                state.signupMessage=null
             })
             .addCase(signupAsync.fulfilled,(state,action)=>{
                 state.signupStatus='fullfilled'
-                state.loggedInUser=action.payload.user
+                state.signupMessage=action.payload.message
+                // Store email in loggedInUser even if we don't get a full user object
+                // This ensures OTP verification page has the email to work with
+                state.loggedInUser = {
+                    email: action.payload.email || action.payload.user?.email,
+                    isVerified: false,
+                    ...action.payload.user
+                }
             })
             .addCase(signupAsync.rejected,(state,action)=>{
                 state.signupStatus='rejected'
                 state.signupError=action.error
+                state.signupMessage=null
             })
 
             .addCase(loginAsync.pending,(state)=>{
@@ -156,6 +177,10 @@ const authSlice=createSlice({
             .addCase(verifyOtpAsync.fulfilled,(state,action)=>{
                 state.otpVerificationStatus='fullfilled'
                 state.loggedInUser=action.payload.user
+                // Clear signup email from localStorage after successful verification
+                localStorage.removeItem('signupEmail')
+                // Also clear any persisted signupUserId
+                localStorage.removeItem('signupUserId')
             })
             .addCase(verifyOtpAsync.rejected,(state,action)=>{
                 state.otpVerificationStatus='rejected'
@@ -260,6 +285,7 @@ export const selectResendOtpSuccessMessage=(state)=>state.AuthSlice.resendOtpSuc
 export const selectResendOtpError=(state)=>state.AuthSlice.resendOtpError
 export const selectSignupStatus=(state)=>state.AuthSlice.signupStatus
 export const selectSignupError=(state)=>state.AuthSlice.signupError
+export const selectSignupMessage=(state)=>state.AuthSlice.signupMessage
 export const selectLoginStatus=(state)=>state.AuthSlice.loginStatus
 export const selectLoginError=(state)=>state.AuthSlice.loginError
 export const selectOtpVerificationStatus=(state)=>state.AuthSlice.otpVerificationStatus

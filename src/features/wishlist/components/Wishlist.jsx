@@ -1,4 +1,5 @@
 import { Button, Card, Flex, Grid, Input, Space, Typography, message } from 'antd'
+import { useTranslation } from 'react-i18next';
 import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux'
 import {
@@ -36,6 +37,7 @@ const { useBreakpoint } = Grid;
 const { TextArea } = Input;
 
 export const Wishlist = () => {
+    const { t } = useTranslation();
 
     const dispatch = useDispatch()
     const wishlistItems = useSelector(selectWishlistItems)
@@ -84,39 +86,39 @@ export const Wishlist = () => {
     // --- useEffects handling messages (thay thế toast) ---
     useEffect(() => {
         if (wishlistItemAddStatus === 'fulfilled') {
-            message.success("Product added to wishlist")
+            message.success(t('wishlist_add_success'))
         }
         else if (wishlistItemAddStatus === 'rejected') {
-            message.error("Error adding product to wishlist, please try again later")
+            message.error(t('wishlist_add_error'))
         }
-    }, [wishlistItemAddStatus])
+    }, [wishlistItemAddStatus, t])
 
     useEffect(() => {
         if (wishlistItemDeleteStatus === 'fulfilled') {
-            message.success("Product removed from wishlist")
+            message.success(t('wishlist_remove_success'))
         }
         else if (wishlistItemDeleteStatus === 'rejected') {
-            message.error("Error removing product from wishlist, please try again later")
+            message.error(t('wishlist_remove_error'))
         }
-    }, [wishlistItemDeleteStatus])
+    }, [wishlistItemDeleteStatus, t])
 
     useEffect(() => {
         if (wishlistItemUpdateStatus === 'fulfilled') {
-            message.success("Wishlist item updated")
+            message.success(t('wishlist_update_success'))
         }
         else if (wishlistItemUpdateStatus === 'rejected') {
-            message.error("Error updating wishlist item")
+            message.error(t('wishlist_update_error'))
         }
         setEditIndex(-1)
         setEditValue("")
-    }, [wishlistItemUpdateStatus])
+    }, [wishlistItemUpdateStatus, t])
 
     useEffect(() => {
         if (cartItemAddStatus === 'fulfilled') {
-            message.success("Product added to cart")
+            message.success(t('cart_add_success'))
         }
         else if (cartItemAddStatus === 'rejected') {
-            message.error('Error adding product to cart, please try again later')
+            message.error(t('cart_add_error'))
         }
     }, [cartItemAddStatus])
 
@@ -154,20 +156,20 @@ export const Wishlist = () => {
 
 
     return (
-        // parent Stack -> Flex
+    // Phần cha Stack -> Flex
         <Flex
             justify={'flex-start'}
             align={'center'}
             vertical
             style={{
-                marginTop: is480 ? 24 : 40, // mt={is480?3:5}
+                marginTop: is480 ? 24 : 40, // khoảng cách trên
                 marginBottom: '14rem',
                 width: '100%'
             }}
         >
             {
                 wishlistFetchStatus === 'pending' ?
-                    // Loading Animation Stack -> Flex
+                    // Hiển thị animation tải dữ liệu
                     <Flex
                         style={{ width: is480 ? 'auto' : '25rem', height: 'calc(100vh - 4rem)' }}
                         justify={'center'}
@@ -176,37 +178,37 @@ export const Wishlist = () => {
                         <Lottie animationData={loadingAnimation} />
                     </Flex>
                     :
-                    // Main Content Stack -> Flex
+                    // Nội dung chính
                     <Flex
                         vertical
-                        gap={is480 ? 16 : 32} // rowGap={is480?2:4}
+                        gap={is480 ? 16 : 32}
                         style={{ width: is1130 ? "auto" : '70rem' }}
                     >
-                        {/* heading area and back button Stack -> Flex */}
+                        {/* Tiêu đề và nút quay lại */}
                         <Flex
                             alignSelf={'flex-start'}
-                            gap={8} // columnGap={1}
+                            gap={8}
                             justify={'center'}
                             align={'center'}
                         >
                             <motion.div whileHover={{ x: -5 }}>
                                 <Link to={'/'}>
-                                    {/* IconButton -> Button */}
+                                    {/* Nút quay lại */}
                                     <Button
                                         type="text"
                                         shape="circle"
-                                        icon={<ArrowLeftOutlined style={{ fontSize: is480 ? 20 : 24 }} />} // fontSize large
+                                        icon={<ArrowLeftOutlined style={{ fontSize: is480 ? 20 : 24 }} />}
                                     />
                                 </Link>
                             </motion.div>
-                            <Title level={4} style={{ fontWeight: 500, margin: 0 }}>Your wishlist</Title>
+                            <Title level={4} style={{ fontWeight: 500, margin: 0 }}>Danh sách yêu thích của bạn</Title>
                         </Flex>
 
-                        {/* product grid Stack -> Flex */}
+                        {/* Danh sách sản phẩm yêu thích */}
                         <Flex vertical>
                             {
                                 !wishlistFetchStatus === 'pending' && wishlistItems?.length === 0 ? (
-                                    // empty wishlist animation Stack -> Flex
+                                    // Trạng thái danh sách rỗng
                                     <Flex
                                         vertical
                                         style={{ minHeight: '60vh', width: is642 ? 'auto' : '40rem' }}
@@ -216,30 +218,30 @@ export const Wishlist = () => {
                                         align={'center'}
                                     >
                                         <Lottie animationData={emptyWishlistAnimation} />
-                                        <Title level={5} style={{ fontWeight: 300 }}>You have no items in your wishlist</Title>
+                                        <Title level={5} style={{ fontWeight: 300 }}>Bạn chưa có sản phẩm nào trong danh sách yêu thích</Title>
                                     </Flex>
                                 ) : (
-                                    // wishlist grid: Grid container -> Flex wrap
+                                    // Lưới hiển thị các sản phẩm trong wishlist
                                     <Flex
                                         wrap="wrap"
-                                        gap={8} // gap={1} -> 8px
+                                        gap={8}
                                         justify={'center'}
                                         alignContent={'center'}
                                     >
                                         {
                                             wishlistItems.map((item, index) => (
-                                                // Stack component={Paper} -> Card
+                                                // Thẻ sản phẩm
                                                 <Card
                                                     key={item._id}
-                                                    bordered={!is480} // elevation={1} when not is480
-                                                    bodyStyle={{ padding: 0 }} // Remove default padding
+                                                    bordered={!is480}
+                                                    bodyStyle={{ padding: 0 }}
                                                 >
                                                     {
-                                                        // Guard against cases where backend returns wishlist item with product as ID only
+                                                        // Trường hợp sản phẩm không tồn tại (đã bị xóa khỏi hệ thống)
                                                         !item.product || typeof item.product !== 'object' ? (
                                                             <div style={{ padding: 16 }}>
-                                                                <Title level={5}>Product unavailable</Title>
-                                                                <Button type='default' onClick={() => dispatch(deleteWishlistItemByIdAsync(item._id))}>Remove</Button>
+                                                                <Title level={5}>Sản phẩm không còn tồn tại</Title>
+                                                                <Button type='default' onClick={() => dispatch(deleteWishlistItemByIdAsync(item._id))}>Xóa khỏi danh sách</Button>
                                                             </div>
                                                         ) : (
                                                             <ProductCard
@@ -257,15 +259,15 @@ export const Wishlist = () => {
                                                         )
                                                     }
 
-                                                    {/* Note section Stack -> Flex */}
+                                                    {/* Phần ghi chú */}
                                                     <Flex
                                                         vertical
-                                                        gap="middle" // Controls spacing
-                                                        style={{ padding: '0 16px 16px 16px' }} // paddingLeft/Right/Bottom={2}
+                                                        gap="middle"
+                                                        style={{ padding: '0 16px 16px 16px' }}
                                                     >
-                                                        {/* note heading and icon Stack -> Flex */}
+                                                        {/* Tiêu đề ghi chú và nút chỉnh sửa */}
                                                         <Flex align={'center'}>
-                                                            <Title level={5} style={{ fontWeight: 400, margin: 0 }}>Note</Title>
+                                                            <Title level={5} style={{ fontWeight: 400, margin: 0 }}>Ghi chú</Title>
                                                             <Button
                                                                 type="text"
                                                                 shape="circle"
@@ -276,45 +278,43 @@ export const Wishlist = () => {
 
                                                         {
                                                             editIndex === index ? (
-                                                                // Edit mode Stack -> Space
+                                                                // Chế độ chỉnh sửa
                                                                 <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                                                                    {/* TextField -> Input.TextArea */}
                                                                     <TextArea
                                                                         rows={4}
                                                                         value={editValue}
                                                                         onChange={(e) => setEditValue(e.target.value)}
                                                                     />
-                                                                    {/* Button group Stack -> Space */}
+                                                                    {/* Nhóm nút */}
                                                                     <Space style={{ alignSelf: 'flex-end', width: '100%', justifyContent: 'flex-end' }}>
-                                                                        <Button onClick={() => handleNoteUpdate(item._id)} size='small' type='primary'>Update</Button>
-                                                                        <Button onClick={() => setEditIndex(-1)} size='small' danger>Cancel</Button>
+                                                                        <Button onClick={() => handleNoteUpdate(item._id)} size='small' type='primary'>Cập nhật</Button>
+                                                                        <Button onClick={() => setEditIndex(-1)} size='small' danger>Hủy</Button>
                                                                     </Space>
                                                                 </Space>
                                                             ) : (
-                                                                // View mode Box -> div
+                                                                // Chế độ xem ghi chú
                                                                 <div>
-                                                                    {/* Typography -> Typography.Paragraph */}
                                                                     <Paragraph
-                                                                        type={item.note ? 'default' : 'secondary'} // color=GrayText
+                                                                        type={item.note ? 'default' : 'secondary'}
                                                                         style={{ wordWrap: "break-word" }}
                                                                     >
-                                                                        {item.note ? item.note : "Add a custom note here"}
+                                                                        {item.note ? item.note : "Thêm ghi chú cá nhân tại đây"}
                                                                     </Paragraph>
                                                                 </div>
                                                             )
                                                         }
 
                                                         {
-                                                            // safe checks for cart membership and add-to-cart action
+                                                            // Kiểm tra sản phẩm đã có trong giỏ hàng chưa
                                                             (item.product && item.product._id) ? (
                                                                 cartItems.some((cartItem) => (cartItem.product && cartItem.product._id) ? cartItem.product._id === item.product._id : cartItem.product === item.product._id) ?
                                                                     <Link to={'/cart'}>
-                                                                        <Button style={{ marginTop: 16 }} size='small' type='default'>Already in cart</Button>
+                                                                        <Button style={{ marginTop: 16 }} size='small' type='default'>Đã có trong giỏ hàng</Button>
                                                                     </Link>
                                                                     :
-                                                                    <Button style={{ marginTop: 16 }} size='small' type='default' onClick={() => handleAddToCart(item.product._id)}>Add To Cart</Button>
+                                                                    <Button style={{ marginTop: 16 }} size='small' type='default' onClick={() => handleAddToCart(item.product._id)}>Thêm vào giỏ hàng</Button>
                                                             ) : (
-                                                                <Button style={{ marginTop: 16 }} size='small' type='default' onClick={() => dispatch(deleteWishlistItemByIdAsync(item._id))}>Remove</Button>
+                                                                <Button style={{ marginTop: 16 }} size='small' type='default' onClick={() => dispatch(deleteWishlistItemByIdAsync(item._id))}>Xóa khỏi danh sách</Button>
                                                             )
                                                         }
 

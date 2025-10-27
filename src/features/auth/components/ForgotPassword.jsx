@@ -1,4 +1,5 @@
 import { Card, Flex, Form, Input, Button, Typography, Grid } from 'antd'
+import { useTranslation } from 'react-i18next';
 import React, { useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { useDispatch, useSelector } from 'react-redux'
@@ -16,6 +17,7 @@ import { Link } from 'react-router-dom'
 const { Title, Text } = Typography;
 
 export const ForgotPassword = () => {
+    const { t } = useTranslation();
     const [form] = Form.useForm(); // AntD's form hook
     const dispatch = useDispatch()
     const status = useSelector(selectForgotPasswordStatus)
@@ -68,12 +70,12 @@ export const ForgotPassword = () => {
                             {/* Header Text */}
                             <Flex vertical gap={4}>
                                 <Title level={4}>
-                                    {status === 'fullfilled' ? "Email has been sent!" : "Forgot Your Password?"}
+                                    {status === 'fullfilled' ? t('forgot_email_sent') : t('forgot_title')}
                                 </Title>
                                 <Text type="secondary">
                                     {status === 'fullfilled'
-                                        ? "Please check your inbox and click on the received link to reset your password"
-                                        : "Enter your registered email below to receive password reset link"}
+                                        ? t('forgot_check_inbox')
+                                        : t('forgot_enter_email')}
                                 </Text>
                             </Flex>
 
@@ -83,11 +85,11 @@ export const ForgotPassword = () => {
                                     <Form.Item
                                         name="email"
                                         rules={[
-                                            { required: true, message: "Please enter an email" },
-                                            { type: 'email', message: "Enter a valid email" }
+                                            { required: true, message: t('forgot_email_required') },
+                                            { type: 'email', message: t('forgot_email_invalid') }
                                         ]}
                                     >
-                                        <Input placeholder='Enter email' />
+                                        <Input placeholder={t('forgot_email_placeholder')} />
                                     </Form.Item>
 
                                     <Form.Item>
@@ -98,7 +100,7 @@ export const ForgotPassword = () => {
                                             block // equivalent to fullWidth
                                             style={{ height: '2.5rem' }}
                                         >
-                                            Send Password Reset Link
+                                            {t('forgot_send_link')}
                                         </Button>
                                     </Form.Item>
                                 </>
@@ -110,7 +112,7 @@ export const ForgotPassword = () => {
                 {/* Back to login navigation */}
                 <Text>
                     <Link to={'/login'}>
-                        Go back to <Text type="link">login</Text>
+                        {t('forgot_back_to_login')} <Text type="link">{t('login')}</Text>
                     </Link>
                 </Text>
             </Flex>

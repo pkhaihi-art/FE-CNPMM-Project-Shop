@@ -313,7 +313,7 @@ export const ProductDetails = () => {
                                         </Tag>
                                     </Flex>
 
-                                    <Title level={3}>${product.price}</Title>
+                                        <Title level={3}>{product.price.toLocaleString('vi-VN')} VNĐ</Title>
                                 </Space>
 
                                 {/* Description */}

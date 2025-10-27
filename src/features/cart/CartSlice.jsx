@@ -6,6 +6,8 @@ const initialState={
     items: [],
     cartItemAddStatus:"idle",
     cartItemRemoveStatus:"idle",
+    addingProductIds: [], // product IDs currently being added (pending)
+    addedProductIds: [], // product IDs that have been successfully added
     errors:null,
     successMessage:null
 }
@@ -22,10 +24,18 @@ export const updateCartItemByIdAsync=createAsyncThunk('cart/updateCartItemByIdAs
     const updatedItem=await updateCartItemById(update)
     return updatedItem
 })
-export const deleteCartItemByIdAsync=createAsyncThunk('cart/deleteCartItemByIdAsync',async(id)=>{
-    const deletedItem=await deleteCartItemById(id)
-    return deletedItem
-})
+
+export const deleteCartItemByIdAsync = createAsyncThunk(
+    "cart/deleteCartItemByIdAsync",
+    async (id, { rejectWithValue }) => {
+        try {
+            await deleteCartItemById(id);
+            return { _id: id };
+        } catch (error) {
+            return rejectWithValue(error);
+        }
+    }
+);
 export const resetCartByUserIdAsync=createAsyncThunk('cart/resetCartByUserIdAsync',async(userId)=>{
     const updatedCart=await resetCartByUserId(userId)
     return updatedCart
@@ -44,16 +54,40 @@ const cartSlice=createSlice({
     },
     extraReducers:(builder)=>{
         builder
-            .addCase(addToCartAsync.pending,(state)=>{
+            .addCase(addToCartAsync.pending,(state, action)=>{
                 state.cartItemAddStatus='pending'
+                // action.meta.arg contains the original argument passed to the thunk (item)
+                try {
+                    const prod = action?.meta?.arg?.product;
+                    const prodId = (prod && typeof prod === 'object') ? prod._id : prod;
+                    if (prodId && !state.addingProductIds.includes(prodId)) {
+                        state.addingProductIds.push(prodId);
+                    }
+                } catch (e) {
+                    // ignore
+                }
             })
             .addCase(addToCartAsync.fulfilled,(state,action)=>{
                 state.cartItemAddStatus='fulfilled'
                 state.items.push(action.payload)
+                try {
+                    const prod = action?.payload?.product || action?.meta?.arg?.product;
+                    const prodId = (prod && typeof prod === 'object') ? prod._id : prod;
+                    // remove from addingProductIds
+                    state.addingProductIds = state.addingProductIds.filter(id => id !== prodId);
+                    if (prodId && !state.addedProductIds.includes(prodId)) {
+                        state.addedProductIds.push(prodId);
+                    }
+                } catch (e) {}
             })
             .addCase(addToCartAsync.rejected,(state,action)=>{
                 state.cartItemAddStatus='rejected'
                 state.errors=action.error
+                try {
+                    const prod = action?.meta?.arg?.product;
+                    const prodId = (prod && typeof prod === 'object') ? prod._id : prod;
+                    state.addingProductIds = state.addingProductIds.filter(id => id !== prodId);
+                } catch (e) {}
             })
 
             .addCase(fetchCartByUserIdAsync.pending,(state)=>{
@@ -62,6 +96,20 @@ const cartSlice=createSlice({
             .addCase(fetchCartByUserIdAsync.fulfilled,(state,action)=>{
                 state.status='fulfilled'
                 state.items=action.payload
+                try {
+                    // Rebuild addedProductIds from fetched items to keep in-sync with server
+                    const ids = new Set();
+                    (action.payload || []).forEach(item => {
+                        const prod = item?.product;
+                        const prodId = (prod && typeof prod === 'object') ? prod._id : prod;
+                        if (prodId) ids.add(prodId);
+                    });
+                    state.addedProductIds = Array.from(ids);
+                    // clear addingProductIds since fetch reflects current server state
+                    state.addingProductIds = [];
+                } catch (e) {
+                    // ignore
+                }
             })
             .addCase(fetchCartByUserIdAsync.rejected,(state,action)=>{
                 state.status='rejected'
@@ -87,6 +135,12 @@ const cartSlice=createSlice({
             .addCase(deleteCartItemByIdAsync.fulfilled,(state,action)=>{
                 state.cartItemRemoveStatus='fulfilled'
                 state.items=state.items.filter((item)=>item._id!==action.payload._id)
+                try {
+                    // Remove product id from addedProductIds when a cart item is removed
+                    const prod = action?.payload?.product;
+                    const prodId = (prod && typeof prod === 'object') ? prod._id : prod;
+                    state.addedProductIds = state.addedProductIds.filter(id => id !== prodId);
+                } catch (e) {}
             })
             .addCase(deleteCartItemByIdAsync.rejected,(state,action)=>{
                 state.cartItemRemoveStatus='rejected'
@@ -114,6 +168,8 @@ export const selectCartErrors=(state)=>state.CartSlice.errors
 export const selectCartSuccessMessage=(state)=>state.CartSlice.successMessage
 export const selectCartItemAddStatus=(state)=>state.CartSlice.cartItemAddStatus
 export const selectCartItemRemoveStatus=(state)=>state.CartSlice.cartItemRemoveStatus
+export const selectCartAddingProductIds = (state) => state.CartSlice.addingProductIds
+export const selectCartAddedProductIds = (state) => state.CartSlice.addedProductIds
 
 // exporting reducers
 export const {resetCartItemAddStatus,resetCartItemRemoveStatus}=cartSlice.actions

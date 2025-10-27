@@ -18,7 +18,7 @@ export const fetchAddressByUserId=async(id)=>{
 }
 export const updateAddressById=async(update)=>{
     try {
-        const res=await axiosi.patch(`/address/${update._id}`,update)
+        const res=await axiosi.patch(`/address/${update.id}`,update)
         return res.data
     } catch (error) {
         throw error.response.data

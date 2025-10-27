@@ -18,6 +18,7 @@ export const login=async(cred)=>{
 }
 export const verifyOtp=async(cred)=>{
     try {
+        // Updated endpoint to match new API: POST /auth/verify-otp
         const res=await axiosi.post("auth/verify-otp",cred)
         return res.data
     } catch (error) {
@@ -26,6 +27,7 @@ export const verifyOtp=async(cred)=>{
 }
 export const resendOtp=async(cred)=>{
     try {
+        // Updated endpoint to match new API: POST /auth/resend-otp
         const res=await axiosi.post("auth/resend-otp",cred)
         return res.data
     } catch (error) {

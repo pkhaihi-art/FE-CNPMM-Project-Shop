@@ -1,169 +1,180 @@
-import { Button, Card, Flex, Input, Typography, Space } from 'antd';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useDispatch, useSelector } from 'react-redux';
-import { deleteAddressByIdAsync, selectAddressErrors, selectAddressStatus, updateAddressByIdAsync } from '../AddressSlice';
+import { useDispatch } from "react-redux";
+import {
+  deleteAddressByIdAsync,
+  updateAddressByIdAsync,
+} from "../AddressSlice";
 
-const { Title, Text } = Typography;
+export const Address = ({ id, type, street, city, state, phoneNumber, userId }) => {
+  const dispatch = useDispatch();
+  const [isEditing, setIsEditing] = useState(false);
 
-export const Address = ({id,type,street,postalCode,country,phoneNumber,state,city}) => {
-    
-    const dispatch = useDispatch();
-    const { register, handleSubmit, reset, formState: { errors } } = useForm({
-        defaultValues: {
-            type,
-            street,
-            postalCode,
-            country,
-            phoneNumber,
-            state,
-            city
-        }
-    });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    defaultValues: { type, street, city, state, phoneNumber },
+  });
 
-    const [edit, setEdit] = useState(false);
-    const status = useSelector(selectAddressStatus);
+  const handleUpdate = (data) => {
+    dispatch(updateAddressByIdAsync({ id, ...data }));
+    setIsEditing(false);
+  };
 
-    // Cập nhật giá trị mặc định của form khi props thay đổi
-    // và khi người dùng nhấn Cancel (setEdit(false)).
-    useEffect(() => {
-        if (!edit) {
-            reset({
-                type,
-                street,
-                postalCode,
-                country,
-                phoneNumber,
-                state,
-                city
-            });
-        }
-    }, [type, street, postalCode, country, phoneNumber, state, city, reset, edit]);
-
-
-    const handleRemoveAddress = () => {
-        dispatch(deleteAddressByIdAsync(id));
+  const handleDelete = () => {
+    if (window.confirm("Are you sure you want to delete this address?")) {
+      dispatch(deleteAddressByIdAsync(id));
     }
+  };
 
-    const handleUpdateAddress = (data) => {
-        const update = { ...data, _id: id };
-        dispatch(updateAddressByIdAsync(update))
-            .then(() => setEdit(false)); 
-    }
-
-    return (
-        <Card 
-            style={{ width: '100%' }} 
-            title={
-                <Title level={5} style={{ margin: 0, color: 'white' }}>
-                    {type?.toUpperCase()}
-                </Title>
-            }
-            headStyle={{ backgroundColor: '#1890ff', color: 'white' }} 
-            bodyStyle={{ padding: '16px' }}
+  return (
+    <div
+      style={{
+        border: "1px solid #ddd",
+        borderRadius: "10px",
+        padding: "16px",
+        marginBottom: "16px",
+      }}
+    >
+      {isEditing ? (
+        <form
+          onSubmit={handleSubmit(handleUpdate)}
+          style={{ display: "flex", flexDirection: "column", gap: "12px" }}
         >
-            
-            <form onSubmit={handleSubmit(handleUpdateAddress)} noValidate>
-                <Flex vertical gap={10}>
-                    {
-                        edit ? (
-                            <Flex vertical gap={10}>
-                                <Space direction="vertical" style={{ width: '100%' }}>
-                                    <Text strong>Type</Text>
-                                    <Input {...register("type", { required: true })} />
-                                </Space>
+          <label>
+            Type:
+            <input
+              type="text"
+              {...register("type", { required: "Type is required" })}
+              style={{ width: "100%", padding: "8px", borderRadius: "6px" }}
+            />
+            {errors.type && (
+              <span style={{ color: "red" }}>{errors.type.message}</span>
+            )}
+          </label>
 
-                                <Space direction="vertical" style={{ width: '100%' }}>
-                                    <Text strong>Street</Text>
-                                    <Input {...register("street", { required: true })} />
-                                </Space>
+          <label>
+            Street:
+            <input
+              type="text"
+              {...register("street", { required: "Street is required" })}
+              style={{ width: "100%", padding: "8px", borderRadius: "6px" }}
+            />
+            {errors.street && (
+              <span style={{ color: "red" }}>{errors.street.message}</span>
+            )}
+          </label>
 
-                                <Space direction="vertical" style={{ width: '100%' }}>
-                                    <Text strong>Postal Code</Text>
-                                    <Input {...register("postalCode", { required: true })} /> 
-                                </Space>
+          <label>
+            City:
+            <input
+              type="text"
+              {...register("city", { required: "City is required" })}
+              style={{ width: "100%", padding: "8px", borderRadius: "6px" }}
+            />
+            {errors.city && (
+              <span style={{ color: "red" }}>{errors.city.message}</span>
+            )}
+          </label>
 
-                                <Space direction="vertical" style={{ width: '100%' }}>
-                                    <Text strong>Country</Text>
-                                    <Input {...register("country", { required: true })} />
-                                </Space>
+          <label>
+            State:
+            <input
+              type="text"
+              {...register("state", { required: "State is required" })}
+              style={{ width: "100%", padding: "8px", borderRadius: "6px" }}
+            />
+            {errors.state && (
+              <span style={{ color: "red" }}>{errors.state.message}</span>
+            )}
+          </label>
 
-                                <Space direction="vertical" style={{ width: '100%' }}>
-                                    <Text strong>Phone Number</Text>
-                                    <Input {...register("phoneNumber", { required: true })} />
-                                </Space>
+          <label>
+            Phone:
+            <input
+              type="text"
+              {...register("phoneNumber", { required: "Phone is required" })}
+              style={{ width: "100%", padding: "8px", borderRadius: "6px" }}
+            />
+            {errors.phone && (
+              <span style={{ color: "red" }}>{errors.phone.message}</span>
+            )}
+          </label>
 
-                                <Space direction="vertical" style={{ width: '100%' }}>
-                                    <Text strong>State</Text>
-                                    <Input {...register("state", { required: true })} />
-                                </Space>
+          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+            <button
+              type="submit"
+              style={{
+                background: "#1677ff",
+                color: "white",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                reset();
+                setIsEditing(false);
+              }}
+              style={{
+                background: "gray",
+                color: "white",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : (
+        <>
+          <p><strong>Type:</strong> {type}</p>
+          <p><strong>Street:</strong> {street}</p>
+          <p><strong>City:</strong> {city}</p>
+          <p><strong>State:</strong> {state}</p>
+          <p><strong>Phone:</strong> {phoneNumber}</p>
 
-                                <Space direction="vertical" style={{ width: '100%' }}>
-                                    <Text strong>City</Text>
-                                    <Input {...register("city", { required: true })} />
-                                </Space>
-                            </Flex>
-                        ) : (
-                            <Flex vertical gap={5}>
-                                <Text>Street - **{street}**</Text>
-                                <Text>Postal Code - **{postalCode}**</Text>
-                                <Text>Country - **{country}**</Text>
-                                <Text>Phone Number - **{phoneNumber}**</Text>
-                                <Text>State - **{state}**</Text>
-                                <Text>City - **{city}**</Text>
-                            </Flex>
-                        )
-                    }
-
-                    {/* Action Buttons */}
-                    <Flex justify="flex-end" style={{ marginTop: '16px' }}>
-                        <Space>
-                            {
-                                edit ? (
-                                    <Button 
-                                        type="primary" 
-                                        htmlType="submit" 
-                                        loading={status === 'pending'} 
-                                        size='small'
-                                    >
-                                        Save Changes
-                                    </Button>
-                                ) : (
-                                    <Button 
-                                        type="primary" 
-                                        onClick={() => setEdit(true)} 
-                                        size='small'
-                                    >
-                                        Edit
-                                    </Button>
-                                )
-                            }
-
-                            {
-                                edit ? (
-                                    <Button 
-                                        onClick={() => { setEdit(false); reset(); }} 
-                                        danger 
-                                        size='small'
-                                    >
-                                        Cancel
-                                    </Button>
-                                ) : (
-                                    <Button 
-                                        onClick={handleRemoveAddress} 
-                                        loading={status === 'pending'} 
-                                        danger 
-                                        size='small' 
-                                        type="default" 
-                                    >
-                                        Remove
-                                    </Button>
-                                )
-                            }
-                        </Space>
-                    </Flex>
-                </Flex>
-            </form>
-        </Card>
-    );
-}
+          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+            <button
+              onClick={() => setIsEditing(true)}
+              style={{
+                background: "#1677ff",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}
+            >
+              Edit
+            </button>
+            <button
+              onClick={handleDelete}
+              style={{
+                background: "#ff4d4f",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};

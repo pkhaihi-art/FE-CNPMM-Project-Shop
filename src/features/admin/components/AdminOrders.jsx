@@ -64,134 +64,141 @@ export const AdminOrders = () => {
     };
 
     const columns = [
-        {
-            title: 'Order',
-            key: 'orderIndex',
-            render: (text, record, index) => index + 1,
+    {
+        title: 'STT',
+        key: 'orderIndex',
+        render: (text, record, index) => index + 1,
+    },
+    {
+        title: 'Mã đơn hàng',
+        dataIndex: '_id',
+        key: '_id',
+        ellipsis: true,
+        width: 100,
+    },
+    {
+        title: 'Sản phẩm',
+        dataIndex: 'item',
+        key: 'item',
+        render: (items) => (
+            <Space direction="vertical">
+                {items.map((product) => (
+                    <Space key={product.product._id}>
+                        <Avatar src={product.product.thumbnail} />
+                        <Text>{product.product.title}</Text>
+                    </Space>
+                ))}
+            </Space>
+        ),
+    },
+    {
+        title: 'Tổng tiền',
+        dataIndex: 'total',
+        key: 'total',
+        render: (total) =>
+            new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND',
+            }).format(total),
+    },
+    {
+        title: 'Địa chỉ giao hàng',
+        dataIndex: 'address',
+        key: 'address',
+        render: (address) => (
+            <Flex vertical>
+                <Text>{address[0].street}</Text>
+                <Text>{address[0].city}</Text>
+                <Text>{address[0].state}</Text>
+                <Text>{address[0].postalCode}</Text>
+            </Flex>
+        ),
+    },
+    {
+        title: 'Phương thức thanh toán',
+        dataIndex: 'paymentMode',
+        key: 'paymentMode',
+    },
+    {
+        title: 'Ngày đặt hàng',
+        dataIndex: 'createdAt',
+        key: 'createdAt',
+        render: (date) => new Date(date).toLocaleDateString('vi-VN'),
+    },
+    {
+        title: 'Trạng thái',
+        dataIndex: 'status',
+        key: 'status',
+        render: (status, record, index) => {
+            if (editIndex === index) {
+                return (
+                    <Select
+                        defaultValue={status}
+                        style={{ width: 150 }}
+                        onChange={(value) => setNewStatus(value)}
+                    >
+                        {editOptions.map((option) => (
+                            <Option key={option} value={option}>
+                                {option}
+                            </Option>
+                        ))}
+                    </Select>
+                );
+            }
+            return <Tag color={getStatusColor(status)}>{status}</Tag>;
         },
-        {
-            title: 'Id',
-            dataIndex: '_id',
-            key: '_id',
-            ellipsis: true,
-            width: 100,
-        },
-        {
-            title: 'Item',
-            dataIndex: 'item',
-            key: 'item',
-            render: (items) => (
-                <Space direction="vertical">
-                    {items.map((product) => (
-                        <Space key={product.product._id}>
-                            <Avatar src={product.product.thumbnail} />
-                            <Text>{product.product.title}</Text>
-                        </Space>
-                    ))}
-                </Space>
-            ),
-        },
-        {
-            title: 'Total Amount',
-            dataIndex: 'total',
-            key: 'total',
-            render: (total) => `$${total}`,
-        },
-        {
-            title: 'Shipping Address',
-            dataIndex: 'address',
-            key: 'address',
-            render: (address) => (
-                <Flex vertical>
-                    <Text>{address[0].street}</Text>
-                    <Text>{address[0].city}</Text>
-                    <Text>{address[0].state}</Text>
-                    <Text>{address[0].postalCode}</Text>
-                </Flex>
-            ),
-        },
-        {
-            title: 'Payment Method',
-            dataIndex: 'paymentMode',
-            key: 'paymentMode',
-        },
-        {
-            title: 'Order Date',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            render: (date) => new Date(date).toDateString(),
-        },
-        {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status, record, index) => {
-                if (editIndex === index) {
-                    return (
-                        <Select
-                            defaultValue={status}
-                            style={{ width: 150 }}
-                            onChange={(value) => setNewStatus(value)}
-                        >
-                            {editOptions.map((option) => (
-                                <Option key={option} value={option}>
-                                    {option}
-                                </Option>
-                            ))}
-                        </Select>
-                    );
-                }
-                return <Tag color={getStatusColor(status)}>{status}</Tag>;
-            },
-        },
-        {
-            title: 'Actions',
-            key: 'actions',
-            render: (text, record, index) => {
-                if (editIndex === index) {
-                    return (
-                        <Button
-                            type="primary"
-                            shape="circle"
-                            icon={<CheckOutlined />}
-                            onClick={handleUpdateOrder}
-                        />
-                    );
-                }
+    },
+    {
+        title: 'Hành động',
+        key: 'actions',
+        render: (text, record, index) => {
+            if (editIndex === index) {
                 return (
                     <Button
+                        type="primary"
                         shape="circle"
-                        icon={<EditOutlined />}
-                        onClick={() => {
-                            setEditIndex(index);
-                            setNewStatus(record.status);
-                        }}
+                        icon={<CheckOutlined />}
+                        onClick={handleUpdateOrder}
                     />
                 );
-            },
+            }
+            return (
+                <Button
+                    shape="circle"
+                    icon={<EditOutlined />}
+                    onClick={() => {
+                        setEditIndex(index);
+                        setNewStatus(record.status);
+                    }}
+                />
+            );
         },
-    ];
+    },
+];
+
 
     return (
-        <Flex justify="center" align="center" style={{ width: '100%' }}>
-            <Flex vertical style={{ width: '100%', margin: '40px 0' }} align="center">
-                {orders.length ? (
-                    <Table
-                        columns={columns}
-                        dataSource={orders}
-                        rowKey="_id"
-                        style={{ width: '95vw' }}
-                        scroll={{ x: 'max-content' }}
-                    />
-                ) : (
-                    <Flex vertical align="center" style={{ maxWidth: '30rem' }}>
-                        <Lottie animationData={noOrdersAnimation} />
-                        <Title level={4} style={{ fontWeight: 400, textAlign: 'center' }}>
-                            There are no orders currently
-                        </Title>
-                    </Flex>
-                )}
-            </Flex>
+    <Flex justify="center" align="center" style={{ width: '100%' }}>
+        <Flex vertical style={{ width: '100%', margin: '40px 0' }} align="center">
+            {orders.length ? (
+                <Table
+                    columns={columns}
+                    dataSource={orders}
+                    rowKey="_id"
+                    style={{ width: '95vw' }}
+                    scroll={{ x: 'max-content' }}
+                    pagination={{
+                        showTotal: (total) => `Tổng cộng ${total} đơn hàng`,
+                    }}
+                />
+            ) : (
+                <Flex vertical align="center" style={{ maxWidth: '30rem' }}>
+                    <Lottie animationData={noOrdersAnimation} />
+                    <Title level={4} style={{ fontWeight: 400, textAlign: 'center' }}>
+                        Hiện tại chưa có đơn hàng nào
+                    </Title>
+                </Flex>
+            )}
         </Flex>
-    );
-};
+    </Flex>
+)};

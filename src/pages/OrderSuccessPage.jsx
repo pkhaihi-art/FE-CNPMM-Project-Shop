@@ -6,6 +6,7 @@ import { selectUserInfo } from '../features/user/UserSlice';
 import { orderSuccessAnimation } from '../assets';
 import Lottie from 'lottie-react';
 import { Button, Card, Typography, Grid, theme as antdTheme } from 'antd';
+import { useTranslation } from 'react-i18next';
 import useBreakpoint from 'antd/es/grid/hooks/useBreakpoint';
 
 const { Title, Text } = Typography;
@@ -16,6 +17,7 @@ export const OrderSuccessPage = () => {
   const currentOrder = useSelector(selectCurrentOrder);
   const userDetails = useSelector(selectUserInfo);
   const { id } = useParams();
+  const { t } = useTranslation();
 
   const token = antdTheme.useToken();
   const screens = useBreakpoint();
@@ -58,7 +60,7 @@ export const OrderSuccessPage = () => {
             Hey {userDetails?.name}
           </Title>
           <Title level={4}>Your Order #{currentOrder?._id} is confirmed</Title>
-          <Text type="secondary">Thank you for shopping with us ❤️</Text>
+          <Text type="secondary">{t('order_thank_you')}</Text>
         </div>
 
         {/* Button */}

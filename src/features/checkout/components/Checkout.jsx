@@ -27,7 +27,7 @@ export const Checkout = () => {
     const cartItems = useSelector(selectCartItems)
     const orderStatus = useSelector(selectOrderStatus)
     const currentOrder = useSelector(selectCurrentOrder)
-    const orderTotal = cartItems.reduce((acc, item) => (item.product.price * item.quantity) + acc, 0)
+    const orderTotal = cartItems.reduce((acc, item) => ((item?.product?.price || 0) * (item?.quantity || 0)) + acc, 0)
     const screens = Grid.useBreakpoint(); // AntD's responsive hook
 
     useEffect(() => {

@@ -1,5 +1,6 @@
 import { Button, Card, Flex, Form, Input, Space, Typography, message } from 'antd'
 import React, { useEffect } from 'react'
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux'
 import {
     clearOtpVerificationError,
@@ -24,6 +25,7 @@ import { useForm, Controller } from "react-hook-form" // Importiere Controller
 export const OtpVerfication = () => {
 
     // Füge 'control' hinzu, um es mit AntD-Komponenten zu verwenden
+    const { t } = useTranslation();
     const { control, handleSubmit, formState: { errors } } = useForm()
     const dispatch = useDispatch()
     const loggedInUser = useSelector(selectLoggedInUser)
@@ -36,10 +38,12 @@ export const OtpVerfication = () => {
 
     // handles the redirection
     useEffect(() => {
-        if (!loggedInUser) {
+        // Only redirect to login if there's no email (means no signup was done)
+        if (!loggedInUser?.email) {
             navigate('/login')
         }
-        else if (loggedInUser && loggedInUser?.isVerified) {
+        // Redirect to home if user is verified
+        else if (loggedInUser?.isVerified) {
             navigate("/")
         }
     }, [loggedInUser, navigate])
@@ -86,7 +90,7 @@ export const OtpVerfication = () => {
 
     useEffect(() => {
         if (otpVerificationStatus === 'fullfilled') {
-            message.success("Email verified! We are happy to have you here") // Geändert zu AntD message
+            message.success(t('verify_otp_success'))
             dispatch(resetResendOtpStatus())
         }
         return () => {
@@ -114,30 +118,27 @@ export const OtpVerfication = () => {
                 <Space direction="vertical" size="large" style={{ width: '100%' }}>
 
                     <Typography.Title level={4} style={{ marginTop: '1rem' }}>
-                        Verify Your Email Address
+                        {t('verify_email_title')}
                     </Typography.Title>
 
                     {
                         resendOtpStatus === 'fullfilled' ? (
-                            // Ersetzt den form Stack
                             <Form
                                 onFinish={handleSubmit(handleVerifyOtp)}
                                 layout="vertical"
                                 style={{ width: '100%' }}
                             >
                                 <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                                    {/* Text-Container */}
                                     <div style={{ textAlign: 'left' }}>
-                                        <Typography.Text type="secondary"> {/* Entspricht color='GrayText' */}
-                                            Enter the 4 digit OTP sent on
+                                        <Typography.Text type="secondary">
+                                            {t('verify_email_enter_otp')}
                                         </Typography.Text>
                                         <br />
-                                        <Typography.Text strong type="secondary"> {/* Entspricht fontWeight 600 */}
+                                        <Typography.Text strong type="secondary">
                                             {loggedInUser?.email}
                                         </Typography.Text>
                                     </div>
 
-                                    {/* Ersetzt TextField und FormHelperText */}
                                     <Form.Item
                                         validateStatus={errors.otp ? 'error' : ''}
                                         help={errors.otp?.message}
@@ -147,55 +148,52 @@ export const OtpVerfication = () => {
                                             name="otp"
                                             control={control}
                                             rules={{
-                                                required: "OTP is required",
-                                                minLength: { value: 4, message: "Please enter a 4 digit OTP" },
-                                                maxLength: { value: 4, message: "Please enter a 4 digit OTP" }
+                                                required: t('otp_required'),
+                                                minLength: { value: 4, message: t('verify_otp_placeholder') },
+                                                maxLength: { value: 4, message: t('verify_otp_placeholder') }
                                             }}
                                             render={({ field }) => (
                                                 <Input
                                                     {...field}
                                                     type="number"
-                                                    placeholder="Enter 4-digit OTP"
+                                                    placeholder={t('verify_otp_placeholder')}
                                                     size="large"
                                                 />
                                             )}
                                         />
                                     </Form.Item>
 
-                                    {/* Ersetzt LoadingButton */}
                                     <Button
                                         loading={otpVerificationStatus === 'pending'}
                                         htmlType='submit'
-                                        type='primary' // Entspricht variant='contained'
-                                        block // Entspricht fullWidth
+                                        type='primary'
+                                        block
                                         size="large"
                                     >
-                                        Verify
+                                        {t('verify_otp_button')}
                                     </Button>
                                 </Space>
                             </Form>
                         ) : (
                             <>
-                                {/* Text-Container */}
                                 <div style={{ textAlign: 'left' }}>
-                                    <Typography.Text type="secondary"> {/* Entspricht color='GrayText' */}
-                                        We will send you an OTP on
+                                    <Typography.Text type="secondary">
+                                        {t('verify_email_send_otp')}
                                     </Typography.Text>
                                     <br />
-                                    <Typography.Text strong type="secondary"> {/* Entspricht fontWeight 600 */}
+                                    <Typography.Text strong type="secondary">
                                         {loggedInUser?.email}
                                     </Typography.Text>
                                 </div>
                                 
-                                {/* Ersetzt LoadingButton */}
                                 <Button
                                     onClick={handleSendOtp}
                                     loading={resendOtpStatus === 'pending'}
-                                    type='primary' // Entspricht variant='contained'
-                                    block // Entspricht fullWidth
+                                    type='primary'
+                                    block
                                     size="large"
                                 >
-                                    Get OTP
+                                    {t('get_otp_button')}
                                 </Button>
                             </>
                         )

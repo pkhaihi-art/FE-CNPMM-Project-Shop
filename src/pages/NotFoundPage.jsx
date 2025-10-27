@@ -1,5 +1,6 @@
 import { Button, Flex, Space, Typography } from 'antd' // Import AntD components
 import React from 'react'
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom'
 import { notFoundPageAnimation } from '../assets'
 import Lottie from 'lottie-react'
@@ -7,6 +8,7 @@ import Lottie from 'lottie-react'
 const { Title, Text } = Typography // Destructure Typography components
 
 export const NotFoundPage = () => {
+  const { t } = useTranslation();
   return (
     // Ersetzt den äußeren Stack
     <Flex 
@@ -26,23 +28,21 @@ export const NotFoundPage = () => {
         <Flex vertical align={'center'}>
             {/* Ersetzt Typography variant='h4' */}
             <Title level={3} style={{ fontWeight: 500, margin: 0 }}>
-              404 Not Found
+              {t('not_found_title')}
             </Title>
-            
-            {/* Ersetzt Typography variant='h6' */}
             <Text type="secondary" style={{ fontSize: '1.1rem', fontWeight: 300 }}>
-              Sorry, we couldn't find the page you were looking for
+              {t('not_found_description')}
             </Text>
         </Flex>
 
         {/* Ersetzt Button */}
         <Link to={'/'}>
             <Button 
-              type='primary' // Entspricht variant='contained'
-              size='large' 
-              style={{ marginTop: 24 }} // Entspricht sx={{mt:3}} (3 * 8px)
+              type='primary'
+              size='large'
+              style={{ marginTop: 24 }}
             >
-              Go back to homePage
+              {t('go_back_home')}
             </Button>
         </Link>
       </Flex>

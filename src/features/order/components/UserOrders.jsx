@@ -2,7 +2,8 @@ import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { getOrderByUserIdAsync, resetOrderFetchStatus, selectOrderFetchStatus, selectOrders } from '../OrderSlice'
 import { selectLoggedInUser } from '../../auth/AuthSlice'
-import { Button, Card, Flex, Typography, Grid, Image, Tag, Spin } from 'antd'
+import { Button, Card, Flex, Typography, Grid, Image, Tag } from 'antd'
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom'
 import { addToCartAsync, resetCartItemAddStatus, selectCartItemAddStatus, selectCartItems } from '../../cart/CartSlice'
 import Lottie from 'lottie-react'
@@ -13,6 +14,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons'
 const { Title, Text } = Typography;
 
 export const UserOrders = () => {
+    const { t } = useTranslation();
 
     const dispatch = useDispatch()
     const loggedInUser = useSelector(selectLoggedInUser)
@@ -38,17 +40,17 @@ export const UserOrders = () => {
 
     useEffect(() => {
         if (cartItemAddStatus === 'fulfilled') {
-            toast.success("Product added to cart")
+            toast.success(t('cart_add_success'))
         } else if (cartItemAddStatus === 'rejected') {
-            toast.error('Error adding product to cart, please try again later')
+            toast.error(t('cart_add_error'))
         }
-    }, [cartItemAddStatus])
+    }, [cartItemAddStatus, t])
 
     useEffect(() => {
         if (orderFetchStatus === 'rejected') {
-            toast.error("Error fetching orders, please try again later")
+            toast.error(t('order_fetch_error'))
         }
-    }, [orderFetchStatus])
+    }, [orderFetchStatus, t])
 
     useEffect(() => {
         return () => {
@@ -78,6 +80,21 @@ export const UserOrders = () => {
                 return 'red';
             default:
                 return 'default';
+        }
+    }
+
+    const getStatusLabel = (status) => {
+        switch (status) {
+            case 'pending':
+                return 'Đang xử lý';
+            case 'shipped':
+                return 'Đã gửi';
+            case 'delivered':
+                return 'Đã giao';
+            case 'cancelled':
+                return 'Đã hủy';
+            default:
+                return status;
         }
     }
 
@@ -116,8 +133,8 @@ export const UserOrders = () => {
                     }
 
                     <Flex vertical gap={8} >
-                        <Title level={4} style={{ margin: 0 }}>Order history</Title>
-                        <Text type="secondary">Check the status of recent orders, manage returns, and discover similar products.</Text>
+                        <Title level={4} style={{ margin: 0 }}>Lịch sử đơn hàng</Title>
+                        <Text type="secondary">Kiểm tra trạng thái đơn gần đây, quản lý trả hàng và khám phá sản phẩm tương tự.</Text>
                     </Flex>
                 </Flex>
 
@@ -139,23 +156,23 @@ export const UserOrders = () => {
                                     <Flex justify={'space-between'} wrap={'wrap'} gap={'1rem'}>
                                         <Flex gap={32} wrap={'wrap'}>
                                             <Flex vertical>
-                                                <Text>Order Number</Text>
+                                                <Text>Mã đơn hàng</Text>
                                                 <Text type={'secondary'}>{order._id}</Text>
                                             </Flex>
 
                                             <Flex vertical>
-                                                <Text>Date Placed</Text>
+                                                <Text>Ngày đặt</Text>
                                                 <Text type={'secondary'}>{new Date(order.createdAt).toDateString()}</Text>
                                             </Flex>
 
                                             <Flex vertical>
-                                                <Text>Total Amount</Text>
+                                                <Text>Tổng tiền</Text>
                                                 <Text strong>${order.total}</Text>
                                             </Flex>
                                         </Flex>
 
                                         <Flex>
-                                            <Text>Item: {order.item.length}</Text>
+                                            <Text>Số sản phẩm: {order.item.length}</Text>
                                         </Flex>
                                     </Flex>
 
@@ -172,7 +189,7 @@ export const UserOrders = () => {
                                                     <Image
                                                         width={120} // Give a fixed width
                                                         src={(product.product && product.product.images && product.product.images[0]) ? product.product.images[0] : ''}
-                                                        alt={(product.product && product.product.title) ? product.product.title : 'Product image'}
+                                                        alt={(product.product && product.product.title) ? product.product.title : 'Hình sản phẩm'}
                                                         style={{
                                                             objectFit: "contain",
                                                             aspectRatio: '1/1',
@@ -188,7 +205,7 @@ export const UserOrders = () => {
                                                                 <Text type={'secondary'}>{product.product.brand.name}</Text>
                                                                 <Text type={'secondary'}>Qty: {product.quantity}</Text>
                                                             </Flex>
-                                                            <Text strong>${product.product.price}</Text>
+                                                            <Text strong>${product.product?.price || 0}</Text>
                                                         </Flex>
 
                                                         <Text type="secondary">{product.product.description}</Text>
@@ -200,12 +217,12 @@ export const UserOrders = () => {
                                                             gap={8}
                                                         >
                                                             <Link to={`/product-details/${product.product?._id || product.product}`}>
-                                                                <Button size='small'>View Product</Button>
+                                                                <Button size='small'>Xem sản phẩm</Button>
                                                             </Link>
                                                             {
                                                                 cartItems.some((cartItem) => (cartItem.product && cartItem.product._id) ? cartItem.product._id === (product.product?._id || product.product) : cartItem.product === (product.product?._id || product.product)) ?
                                                                     <Link to={"/cart"}>
-                                                                        <Button size='small' type='primary'>Already in Cart</Button>
+                                                                        <Button size='small' type='primary'>Đã có trong giỏ</Button>
                                                                     </Link>
                                                                     : <Button size='small' type='primary' onClick={() => handleAddToCart(product.product)}>Buy Again</Button>
                                                             }
@@ -218,7 +235,7 @@ export const UserOrders = () => {
 
                                     {/* lower */}
                                     <Flex style={{ marginTop: 16 }} justify={'space-between'}>
-                                        <Text>Status : <Tag color={getStatusColor(order.status)}>{order.status}</Tag></Text>
+                                        <Text>Trạng thái: <Tag color={getStatusColor(order.status)}>{getStatusLabel(order.status)}</Tag></Text>
                                     </Flex>
                                 </Flex>
                             </Card>
@@ -238,7 +255,7 @@ export const UserOrders = () => {
                                     <Lottie animationData={noOrdersAnimation} />
                                 </div>
                                 <Title level={5} style={{ textAlign: 'center' }}>
-                                    oh! Looks like you haven't been shopping lately
+                                    Ôi! Có vẻ bạn chưa mua sắm gần đây
                                 </Title>
                             </Flex>
                         )

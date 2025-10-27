@@ -1,16 +1,12 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
     fetchAllUsers,
-    fetchUserById,
-    updateUserByAdmin,
-    deleteUserByAdmin,
     blockUser,
     unblockUser,
 } from "./AdminUserApi";
 
 const initialState = {
     users: [],
-    selectedUser: null,
     status: "idle",
     error: null,
 };
@@ -19,24 +15,14 @@ export const fetchAllUsersAsync = createAsyncThunk("admin/fetchAllUsers", async 
     return await fetchAllUsers();
 });
 
-export const fetchUserByIdAsync = createAsyncThunk("admin/fetchUserById", async (id) => {
-    return await fetchUserById(id);
-});
-
-export const updateUserByAdminAsync = createAsyncThunk("admin/updateUserByAdmin", async (update) => {
-    return await updateUserByAdmin(update);
-});
-
-export const deleteUserByAdminAsync = createAsyncThunk("admin/deleteUserByAdmin", async (id) => {
-    return await deleteUserByAdmin(id);
-});
-
 export const blockUserAsync = createAsyncThunk("admin/blockUser", async (userId) => {
-    return await blockUser(userId);
+    await blockUser(userId);
+    return userId; // Trả về userId để update state
 });
 
 export const unblockUserAsync = createAsyncThunk("admin/unblockUser", async (userId) => {
-    return await unblockUser(userId);
+    await unblockUser(userId);
+    return userId; // Trả về userId để update state
 });
 
 const adminUserSlice = createSlice({
@@ -50,26 +36,26 @@ const adminUserSlice = createSlice({
             })
             .addCase(fetchAllUsersAsync.fulfilled, (state, action) => {
                 state.status = "succeeded";
-                state.users = action.payload.users;
+                // Backend trả về { message, users, total }
+                state.users = action.payload.users || [];
             })
             .addCase(fetchAllUsersAsync.rejected, (state, action) => {
                 state.status = "failed";
                 state.error = action.error.message;
             })
-            .addCase(updateUserByAdminAsync.fulfilled, (state, action) => {
-                const idx = state.users.findIndex((u) => u._id === action.payload._id);
-                if (idx !== -1) state.users[idx] = action.payload;
-            })
-            .addCase(deleteUserByAdminAsync.fulfilled, (state, action) => {
-                state.users = state.users.filter((u) => u._id !== action.payload._id);
-            })
             .addCase(blockUserAsync.fulfilled, (state, action) => {
-                const idx = state.users.findIndex((u) => u._id === action.payload._id);
-                if (idx !== -1) state.users[idx] = action.payload;
+                // Update isVerified thành false cho user bị khóa
+                const idx = state.users.findIndex((u) => u._id === action.payload);
+                if (idx !== -1) {
+                    state.users[idx].isVerified = false;
+                }
             })
             .addCase(unblockUserAsync.fulfilled, (state, action) => {
-                const idx = state.users.findIndex((u) => u._id === action.payload._id);
-                if (idx !== -1) state.users[idx] = action.payload;
+                // Update isVerified thành true cho user được mở khóa
+                const idx = state.users.findIndex((u) => u._id === action.payload);
+                if (idx !== -1) {
+                    state.users[idx].isVerified = true;
+                }
             });
     },
 });

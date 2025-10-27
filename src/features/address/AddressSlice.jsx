@@ -25,10 +25,18 @@ export const updateAddressByIdAsync=createAsyncThunk('address/updateAddressByIdA
     const updatedAddress=await updateAddressById(id)
     return updatedAddress
 })
-export const deleteAddressByIdAsync=createAsyncThunk('address/deleteAddressByIdAsync',async(id)=>{
-    const deletedAddress=await deleteAddressById(id)
-    return deletedAddress
-})
+export const deleteAddressByIdAsync = createAsyncThunk(
+  "address/deleteAddressById",
+  async (id, { rejectWithValue }) => {
+    try {
+      await deleteAddressById(id); // server không trả id
+      return id; // 👈 ta tự return id lại để reducer dùng
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 
 const addressSlice=createSlice({
     name:"addressSlice",

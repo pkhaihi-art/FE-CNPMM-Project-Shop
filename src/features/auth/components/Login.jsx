@@ -79,7 +79,7 @@ export const Login = () => {
                 {/* Header */}
                 <Flex vertical align="center">
                     <Title level={2} style={{ wordBreak: "break-word", margin: 0 }}>
-                        Mern Shop
+                        Tech Shop
                     </Title>
                     <Text type="secondary" style={{ alignSelf: 'flex-end' }}>
                         - Shop Anything

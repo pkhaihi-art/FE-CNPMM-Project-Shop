@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Layout, Flex, Typography, Dropdown, Menu, Avatar, Tooltip, Badge, Button, Tag, Space, Grid, theme } from 'antd';
+import { Layout, Flex, Typography, Dropdown, Avatar, Tooltip, Badge, Button, Tag, Space, Grid, theme } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUserInfo } from '../../user/UserSlice';
@@ -34,19 +34,19 @@ export const Navbar = ({ isProductList = false }) => {
     };
 
     const settings = [
-        { name: "Home", to: "/" },
-        { name: 'Profile', to: loggedInUser?.isAdmin ? "/admin/profile" : "/profile" },
-        { name: loggedInUser?.isAdmin ? 'Orders' : 'My orders', to: loggedInUser?.isAdmin ? "/admin/orders" : "/orders" },
-        ...(loggedInUser?.isAdmin ? [{ name: "Brand", to: "/admin/brand" }] : []),
-        ...(loggedInUser?.isAdmin ? [{ name: "Users", to: "/admin/user" }] : []),
-        { name: 'Logout', to: "/logout" },
+        { name: "Trang chủ", to: "/" },
+        { name: 'Hồ sơ', to: loggedInUser?.isAdmin ? "/admin/profile" : "/profile" },
+        { name: loggedInUser?.isAdmin ? 'Đơn hàng' : 'Đơn hàng của tôi', to: loggedInUser?.isAdmin ? "/admin/orders" : "/orders" },
+        ...(loggedInUser?.isAdmin ? [{ name: "Thương hiệu", to: "/admin/brand" }] : []),
+        ...(loggedInUser?.isAdmin ? [{ name: "Người dùng", to: "/admin/user" }] : []),
+        { name: 'Đăng xuất', to: "/logout" },
     ];
 
     // Build menu items for AntD Dropdown
     const menuItems = [
         loggedInUser?.isAdmin && {
             key: 'add-product',
-            label: <Link to="/admin/add-product">Add new Product</Link>,
+            label: <Link to="/admin/add-product">Thêm sản phẩm mới</Link>,
         },
         ...settings.map((setting) => ({
             key: setting.to,
@@ -80,15 +80,15 @@ export const Navbar = ({ isProductList = false }) => {
                 }}
             >
                 <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>
-                    MERN SHOP
+                    TECH SHOP
                 </Link>
             </Title>
 
             <Flex align="center" gap="middle">
                 <Dropdown menu={{ items: menuItems }} placement="bottomRight" arrow trigger={['click']}>
-                    <Tooltip title="Open settings">
+                    <Tooltip title="Mở cài đặt">
                         <Avatar
-                            alt={userInfo?.name || 'User'}
+                            alt={userInfo?.name || 'Người dùng'}
                             src={null} // Set to null to show icon or children
                             icon={<UserOutlined />}
                             style={{ cursor: 'pointer' }}
@@ -99,11 +99,11 @@ export const Navbar = ({ isProductList = false }) => {
                 <Text strong>
                     {/* Replaced is480 with !screens.sm */}
                     {!screens.sm
-                        ? `${userInfo?.name?.toString().split(" ")[0] || 'User'}`
-                        : `Hey👋, ${userInfo?.name || 'User'}`}
+                        ? `${userInfo?.name?.toString().split(" ")[0] || 'Người dùng'}`
+                        : `Xin chào👋, ${userInfo?.name || 'Người dùng'}`}
                 </Text>
 
-                {loggedInUser.isAdmin && <Tag color="blue">Admin</Tag>}
+                {loggedInUser.isAdmin && <Tag color="blue">Quản trị</Tag>}
 
                 <Space size="middle">
                     {cartItems?.length > 0 && (

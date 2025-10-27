@@ -1,13 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Card, Typography, Button, Space, Grid, Flex, Tooltip } from 'antd';
+import { Card, Typography, Button, Space, Grid, Flex, Tooltip, message } from 'antd';
 import { HeartOutlined, HeartFilled, ShoppingCartOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
+import { selectWishlistItemAddStatus, selectWishlistItemDeleteStatus, fetchWishlistByUserIdAsync } from '../../wishlist/WishlistSlice';
 
 import { selectWishlistItems } from '../../wishlist/WishlistSlice';
 import { selectLoggedInUser } from '../../auth/AuthSlice';
-import { addToCartAsync, selectCartItems } from '../../cart/CartSlice';
+import { addToCartAsync, selectCartItems, selectCartItemAddStatus, selectCartAddingProductIds, selectCartAddedProductIds } from '../../cart/CartSlice';
 
 // Destructure component của AntD để code gọn hơn
 const { Title, Text } = Typography;
@@ -30,26 +31,126 @@ export const ProductCard = ({
     const dispatch = useDispatch();
     const screens = useBreakpoint(); // Hook responsive của AntD
 
-    // Lấy state từ Redux (giữ nguyên)
+    // Lấy state từ Redux
     const wishlistItems = useSelector(selectWishlistItems);
     const loggedInUser = useSelector(selectLoggedInUser);
     const cartItems = useSelector(selectCartItems);
 
-    // Logic kiểm tra (giữ nguyên)
-    const isProductAlreadyinWishlist = wishlistItems.some((item) => (item.product && item.product._id) ? item.product._id === id : item.product === id);
-    const isProductAlreadyInCart = cartItems.some((item) => (item.product && item.product._id) ? item.product._id === id : item.product === id);
+    // Selectors cho trạng thái wishlist và cart
+    const wishlistAddStatus = useSelector(selectWishlistItemAddStatus);
+    const wishlistDeleteStatus = useSelector(selectWishlistItemDeleteStatus);
+    const cartAddStatus = useSelector(selectCartItemAddStatus);
 
-    // Handler thêm vào giỏ hàng (giữ nguyên)
+    // Trạng thái loading
+    const isWishlistLoading = wishlistAddStatus === 'pending' || wishlistDeleteStatus === 'pending';
+    const isCartLoading = cartAddStatus === 'pending';
+    const addingProductIds = useSelector(selectCartAddingProductIds);
+    const addedProductIds = useSelector(selectCartAddedProductIds);
+    const isAddedFromStore = (addingProductIds || []).includes(id) || (addedProductIds || []).includes(id);
+
+    // Xử lý cập nhật sau khi thêm/xóa khỏi wishlist
+    React.useEffect(() => {
+        if (wishlistAddStatus === 'fulfilled' || wishlistDeleteStatus === 'fulfilled') {
+            // Refresh wishlist data
+            dispatch(fetchWishlistByUserIdAsync());
+        }
+    }, [wishlistAddStatus, wishlistDeleteStatus, dispatch]);
+
+
+        // Logic kiểm tra cải tiến với xử lý null/undefined
+        const isProductAlreadyinWishlist = wishlistItems.some((item) => {
+            if (!item || !item.product) return false;
+        
+            // Kiểm tra nếu item.product là object hoặc string
+            if (typeof item.product === 'object') {
+                return item.product?._id === id;
+            }
+            return item.product === id;
+        });
+
+        const isProductAlreadyInCart = cartItems.some((item) => {
+            if (!item || !item.product) return false;
+        
+            // Kiểm tra nếu item.product là object hoặc string
+            if (typeof item.product === 'object') {
+                return item.product?._id === id;
+            }
+            return item.product === id;
+        });
+
+        // No-op helpers removed; direct checks used where needed
+    // Effect để refresh wishlist sau khi thêm/xóa
+    React.useEffect(() => {
+        if ((wishlistAddStatus === 'fulfilled' || wishlistDeleteStatus === 'fulfilled') && loggedInUser?._id) {
+            dispatch(fetchWishlistByUserIdAsync(loggedInUser._id));
+            message.success(wishlistAddStatus === 'fulfilled' ? 'Đã thêm vào danh sách yêu thích' : 'Đã xóa khỏi danh sách yêu thích');
+        }
+    }, [wishlistAddStatus, wishlistDeleteStatus, loggedInUser, dispatch]);
+
+    // Handler thêm vào giỏ hàng với xử lý lỗi
     const handleAddToCart = async (e) => {
         e.stopPropagation();
-        const data = { user: loggedInUser?._id, product: id };
-        dispatch(addToCartAsync(data));
+
+        // Kiểm tra id sản phẩm
+        if (!id) {
+            message.error("Không tìm thấy thông tin sản phẩm");
+            return;
+        }
+
+        if (!loggedInUser) {
+            message.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
+            return;
+        }
+
+        // Nếu đã thêm local hoặc server-side thì không cho thêm nữa
+        const alreadyInCart = cartItems.some(item => {
+            if (!item || !item.product) return false;
+            return (typeof item.product === 'object') ? item.product._id === id : item.product === id;
+        });
+        if (alreadyInCart || isAddedFromStore) {
+            message.info("Sản phẩm đã có trong giỏ hàng");
+            return;
+        }
+
+        try {
+            await dispatch(addToCartAsync({ user: loggedInUser._id, product: id })).unwrap();
+            message.success("Đã thêm vào giỏ hàng");
+        } catch (error) {
+            console.error('Add to cart error:', error);
+            message.error(error?.message || "Có lỗi xảy ra, vui lòng thử lại sau");
+        }
     };
 
-    // Handler cho Wishlist (tách ra cho rõ ràng)
+    // Handler cho Wishlist với xử lý lỗi
     const handleWishlistClick = (e) => {
         e.stopPropagation();
-        handleAddRemoveFromWishlist(e, id);
+           // Kiểm tra id sản phẩm
+           if (!id) {
+               message.error("Không tìm thấy thông tin sản phẩm");
+               return;
+           }
+        try {
+            if (!loggedInUser) {
+                message.error("Vui lòng đăng nhập để thêm vào danh sách yêu thích");
+                return;
+            }
+            handleAddRemoveFromWishlist(e, id);
+        } catch (error) {
+               // Kiểm tra sản phẩm trong wishlist
+               const existingWishlistItem = wishlistItems.find(item => {
+                   if (!item || !item.product) return false;
+                   return (typeof item.product === 'object') 
+                       ? item.product._id === id 
+                       : item.product === id;
+               });
+
+               if (existingWishlistItem && !existingWishlistItem.product) {
+                   message.error("Có lỗi với sản phẩm trong danh sách yêu thích");
+                   return;
+               }
+            console.error('Wishlist action error:', error);
+            message.error("Có lỗi xảy ra, vui lòng thử lại sau");
+        }
     };
 
     // Hàm xác định chiều rộng card dựa trên breakpoint
@@ -73,7 +174,7 @@ export const ProductCard = ({
             onClick={() => navigate(`/product-details/${id}`)}
             cover={
                 <img
-                    alt={`${title} photo unavailable`}
+                    alt={title}
                     src={thumbnail}
                     style={{
                         width: '100%',
@@ -115,6 +216,8 @@ export const ProductCard = ({
                                         <HeartOutlined />
                                     }
                                     onClick={handleWishlistClick}
+                                    loading={isWishlistLoading}
+                                    disabled={isWishlistLoading}
                                 />
                             </Tooltip>
                         </motion.div>
@@ -123,7 +226,7 @@ export const ProductCard = ({
 
                                 {/* Phần Giá và Giảm giá */}
                                 <Space align="center" size="middle">
-                                    <Title level={4} style={{ margin: 0 }}>${price}</Title>
+                                 <Title level={4} style={{ margin: 0 }}>{price.toLocaleString('vi-VN')} VNĐ</Title>
                                     {discountPercentage > 0 && (
                                         <span style={{
                                             background: '#ff4d4f',
@@ -141,8 +244,8 @@ export const ProductCard = ({
 
                 {/* Nút Giỏ hàng (trên dòng mới) */}
                 {!isWishlistCard && !isAdminCard && (
-                    isProductAlreadyInCart ? (
-                        <Button disabled style={{ width: '100%' }}>
+                    (isProductAlreadyInCart || isAddedFromStore) ? (
+                        <Button disabled style={{ width: '100%', background: '#f0f0f0', color: '#8c8c8c' }}>
                             Đã thêm vào giỏ
                         </Button>
                     ) : (
@@ -156,8 +259,10 @@ export const ProductCard = ({
                                 icon={<ShoppingCartOutlined />}
                                 onClick={handleAddToCart}
                                 style={{ width: '100%' }}
+                                loading={isCartLoading}
+                                disabled={isCartLoading || isAddedFromStore}
                             >
-                                Thêm vào giỏ
+                                {isCartLoading ? 'Đang thêm...' : (isAddedFromStore ? 'Đã thêm' : 'Thêm vào giỏ')}
                             </Button>
                         </motion.div>
                     )

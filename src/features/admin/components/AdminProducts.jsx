@@ -96,7 +96,7 @@ export const AdminProducts = () => {
       title: 'Giá',
       dataIndex: 'price',
       key: 'price',
-      render: (price) => `$${price}`,
+        render: (price) => `${price.toLocaleString('vi-VN')} VNĐ`,
     },
     {
       title: 'Giảm giá',
